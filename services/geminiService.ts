@@ -1,9 +1,8 @@
-
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// 지침에 따라 텍스트 작업을 위한 최신 모델 사용
-const MODEL_NAME = "gemini-3-flash-preview";
+// 복잡한 텍스트 분석 및 추론 작업을 위해 gemini-3-pro-preview 사용
+const MODEL_NAME = "gemini-3-pro-preview";
 
 const SYSTEM_INSTRUCTION = `
 You are the AIEO (AI Information Engine Optimization) Engine. 
@@ -99,13 +98,9 @@ function cleanJsonString(text: string): string {
 }
 
 export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
-  // 호출 직전에 process.env.API_KEY를 참조하여 GoogleGenAI 인스턴스 생성
-  const apiKey = process.env.API_KEY;
+  // 호출 직전에 최신 API 키를 참조하여 GoogleGenAI 인스턴스 생성
+  const apiKey = process.env.API_KEY || "";
   
-  if (!apiKey || apiKey.trim() === "") {
-    throw new Error("API_KEY_MISSING");
-  }
-
   try {
     const ai = new GoogleGenAI({ apiKey });
     
@@ -133,9 +128,10 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
     return JSON.parse(cleanedText) as AnalysisResult;
 
   } catch (error: any) {
-    // "Requested entity was not found" 에러는 대개 API 키 문제이므로 상위로 전달하여 처리
-    if (error.message?.includes("Requested entity was not found")) {
-        throw new Error("API_KEY_INVALID");
+    // API 키 관련 에러 또는 엔티티를 찾을 수 없는 경우 명확한 에러 코드 전달
+    const errorMsg = error.message || "";
+    if (errorMsg.includes("API Key must be set") || errorMsg.includes("Requested entity was not found")) {
+        throw new Error("API_KEY_INVALID_OR_MISSING");
     }
     throw error;
   }

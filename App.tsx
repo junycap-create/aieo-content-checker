@@ -37,7 +37,7 @@ function App() {
   // Check if API key is already set via environment or selection
   useEffect(() => {
     const checkApiKey = async () => {
-      if (process.env.API_KEY) {
+      if (process.env.API_KEY && process.env.API_KEY !== "") {
         setIsKeyRequired(false);
         return;
       }
@@ -57,10 +57,9 @@ function App() {
     const aistudio = (window as any).aistudio;
     if (aistudio) {
       await aistudio.openSelectKey();
-      setIsKeyRequired(false); // Assume success after opening as per guidelines
-      // We don't wait for hasSelectedApiKey due to race condition rules
+      setIsKeyRequired(false); // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행
     } else {
-      alert("이 환경에서는 API 키 선택기를 지원하지 않습니다. Vercel 환경 변수를 확인해주세요.");
+      alert("이 환경에서는 API 키 선택기를 지원하지 않습니다. Vercel 환경 변수 설정을 다시 확인해주세요.");
     }
   };
 
@@ -102,7 +101,8 @@ function App() {
     } catch (error: any) {
       console.error(error);
       
-      if (error.message === "API_KEY_MISSING" || error.message === "API_KEY_INVALID") {
+      // API 키가 없거나 잘못된 경우 (Requested entity was not found 포함)
+      if (error.message === "API_KEY_INVALID_OR_MISSING" || error.message?.includes("An API Key must be set")) {
         setIsKeyRequired(true);
         await handleOpenKeySelector();
         setStatus(AnalysisStatus.IDLE);
