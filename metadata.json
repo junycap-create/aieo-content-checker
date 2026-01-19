@@ -1,0 +1,5 @@
+{
+  "name": "AIEO Content Checker",
+  "description": "A quantitative analysis tool for PR content optimization in the AI search era. Analyze readability, data presence, and snippetability for LLM-based search engines.",
+  "requestFramePermissions": []
+}

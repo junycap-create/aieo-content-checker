@@ -1,0 +1,150 @@
+
+import React, { useState } from 'react';
+import { RewriteSet } from '../types';
+import { ICONS } from '../constants';
+
+interface RewriteEngineProps {
+  rewrites: RewriteSet;
+  checklists: {
+    basic: string[];
+    linkedin: string[];
+    newsroom: string[];
+    faq: string[];
+    tldr: string[];
+  };
+}
+
+const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists }) => {
+  const [activeTab, setActiveTab] = useState<'basic' | 'linkedin' | 'newsroom' | 'faq' | 'tldr'>('basic');
+
+  const tabs = [
+    { id: 'basic', label: '최적화 기본형 (블로그)' },
+    { id: 'linkedin', label: '링크드인 포스트' },
+    { id: 'newsroom', label: '보도자료 스타일' },
+    { id: 'faq', label: 'Q&A 구조' },
+    { id: 'tldr', label: 'TL;DR (핵심 요약)' },
+  ];
+
+  const content = rewrites[activeTab];
+  // Safe fallback if checklists structure hasn't updated yet in older cached results
+  const activeChecklist = checklists && checklists[activeTab] ? checklists[activeTab] : [];
+
+  const getChecklistTitle = (id: string) => {
+    switch(id) {
+        case 'basic': return '블로그 SEO 최적화 포인트';
+        case 'linkedin': return '링크드인 인게이지먼트 전략';
+        case 'newsroom': return '보도자료 신뢰도 강화 팁';
+        case 'faq': return 'Q&A 명확성 개선 가이드';
+        case 'tldr': return '핵심 메시지 전달 전략';
+        default: return '최적화 인사이트';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-indigo-600 p-2 rounded-lg text-white">
+            <ICONS.Rewrite className="w-5 h-5" />
+        </div>
+        <h3 className="font-bold text-xl text-zinc-900 font-mono">AIEO 리라이트 엔진</h3>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        {/* Main Rewrite Area */}
+        <div className="lg:col-span-2">
+            {/* Tab Navigation - Improved scrolling and spacing */}
+            <div className="flex flex-nowrap space-x-2 mb-4 bg-zinc-100 p-1.5 rounded-lg w-full overflow-x-auto no-scrollbar pr-4">
+                {tabs.map((tab) => (
+                <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`px-4 py-2.5 text-xs md:text-sm font-bold font-mono rounded-md transition-all whitespace-nowrap min-w-max shrink-0 ${
+                    activeTab === tab.id
+                        ? 'bg-white text-black shadow-sm ring-1 ring-black/5'
+                        : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-200/50'
+                    }`}
+                >
+                    {tab.label}
+                </button>
+                ))}
+            </div>
+
+            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 relative group min-h-[300px] flex flex-col">
+                <div className="text-lg text-zinc-800 font-serif tracking-wide mb-8 break-words pr-24">
+                    {/* Improved rendering: split by double newline for paragraphs, parse bold markdown */}
+                    {content.split(/\n\n+/).map((paragraph, idx) => (
+                        <p key={idx} className="mb-4 leading-8">
+                            {paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => 
+                                part.startsWith('**') && part.endsWith('**') 
+                                ? <strong key={i} className="font-bold text-zinc-900">{part.slice(2, -2)}</strong> 
+                                : part
+                            )}
+                        </p>
+                    ))}
+                </div>
+                {/* Fixed Copy Button with Backdrop Blur to prevent text overlap issues */}
+                <div className="absolute top-4 right-4 z-10">
+                    <button 
+                        onClick={() => navigator.clipboard.writeText(content)}
+                        className="text-xs bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-900 px-3 py-1.5 rounded font-mono hover:bg-black hover:text-white hover:border-black transition-all flex items-center gap-2 shadow-sm"
+                    >
+                        <ICONS.Content className="w-3 h-3" /> COPY
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {/* Quick Fix Checklist */}
+        <div className="bg-white rounded-lg p-6 border-2 border-indigo-100 h-fit mt-8 lg:mt-24">
+            <h4 className="text-sm font-bold text-indigo-900 mb-4 flex items-center gap-2 font-mono uppercase tracking-wider">
+                <ICONS.Check className="w-4 h-4" /> {getChecklistTitle(activeTab)}
+            </h4>
+            <ul className="space-y-4">
+                {activeChecklist.length > 0 ? (
+                    activeChecklist.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3 animate-fade-in">
+                            <span className="mt-1 min-w-[20px] h-5 bg-indigo-600 text-white rounded flex items-center justify-center text-xs font-mono font-bold shrink-0">
+                                {idx + 1}
+                            </span>
+                            <span className="text-base text-zinc-700 font-medium leading-snug">{item}</span>
+                        </li>
+                    ))
+                ) : (
+                    <li className="text-zinc-400 italic text-sm">인사이트를 불러오는 중...</li>
+                )}
+            </ul>
+        </div>
+      </div>
+
+      {/* AIEO 10 Commandments Section */}
+      <div className="mt-8 pt-8 border-t-2 border-zinc-100">
+        <h4 className="text-lg font-bold text-zinc-900 mb-6 font-mono flex items-center gap-2">
+            <ICONS.Book className="w-5 h-5" />
+            AIEO 리라이트 10계명 (The 10 Commandments)
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[
+                { title: "1. 두괄식 배치", desc: "핵심 결론을 문단 첫 문장에 두세요." },
+                { title: "2. 구체적 수치", desc: "모호한 표현 대신 정확한 데이터를 쓰세요." },
+                { title: "3. 엔터티 명시", desc: "대명사(그것) 대신 브랜드명을 반복하세요." },
+                { title: "4. Q&A 구조", desc: "사용자의 질문을 예상하고 답변하세요." },
+                { title: "5. 간결한 문장", desc: "AI가 이해하기 쉽게 문장을 쪼개세요." },
+                { title: "6. 명확한 정의", desc: "핵심 개념은 'A는 B다'로 정의하세요." },
+                { title: "7. 논리적 연결", desc: "'왜냐하면', '따라서'로 인과를 잇으세요." },
+                { title: "8. 권위자 인용", desc: "전문가나 CEO의 발언으로 신뢰를 높이세요." },
+                { title: "9. 구조화 포맷", desc: "소제목과 불렛포인트를 적극 활용하세요." },
+                { title: "10. 일관된 메시지", desc: "하나의 글에는 하나의 메시지만 담으세요." },
+            ].map((item, idx) => (
+                <div key={idx} className="bg-zinc-50 p-4 rounded-lg border border-zinc-100 hover:border-zinc-300 transition-colors">
+                    <div className="text-xs font-mono font-bold text-indigo-600 mb-1">Rule {idx + 1}</div>
+                    <div className="font-bold text-zinc-800 text-sm mb-1">{item.title}</div>
+                    <div className="text-xs text-zinc-500 leading-snug">{item.desc}</div>
+                </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RewriteEngine;
