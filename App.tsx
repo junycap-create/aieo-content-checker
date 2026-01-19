@@ -28,33 +28,30 @@ function App() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isKeyRequired, setIsKeyRequired] = useState(false);
+  const [errorType, setErrorType] = useState<'NONE' | 'OVERLOADED' | 'KEY' | 'GENERAL'>('NONE');
 
   const [adminLogs, setAdminLogs] = useState<AnalysisLog[]>([]);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
 
-  // API 키 선택 창을 여는 헬퍼 함수
   const handleOpenKeySelector = async () => {
     const aistudio = (window as any).aistudio;
     if (aistudio) {
       try {
         await aistudio.openSelectKey();
-        // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행합니다.
         setIsKeyRequired(false);
       } catch (err) {
         console.error("Key selection failed:", err);
       }
     } else {
-      alert("이 브라우저 환경에서는 API 키 자동 설정을 지원하지 않습니다. Vercel 환경 변수 설정을 다시 확인해주세요.");
+      alert("이 브라우저 환경에서는 API 키 설정을 지원하지 않습니다.");
     }
   };
 
-  // 앱 시작 시 API 키 존재 여부 확인
   useEffect(() => {
     const checkApiKey = async () => {
       const aistudio = (window as any).aistudio;
       if (aistudio) {
         const hasKey = await aistudio.hasSelectedApiKey();
-        // process.env.API_KEY가 있거나 이미 키를 선택했다면 OK
         const isReady = (process.env.API_KEY && process.env.API_KEY !== "") || hasKey;
         setIsKeyRequired(!isReady);
       }
@@ -68,19 +65,9 @@ function App() {
       return;
     }
 
-    // 1차 API 키 체크
-    const currentApiKey = process.env.API_KEY;
-    const aistudio = (window as any).aistudio;
-    if ((!currentApiKey || currentApiKey === "") && aistudio) {
-      const hasKey = await aistudio.hasSelectedApiKey();
-      if (!hasKey) {
-        setIsKeyRequired(true);
-        await handleOpenKeySelector();
-        // 키 선택 후 process.env.API_KEY가 주입될 때까지 잠시 대기하지 않고 바로 진행 시도 (가이드라인 준수)
-      }
-    }
-
+    setErrorType('NONE');
     setStatus(AnalysisStatus.ANALYZING);
+
     try {
       const data = await analyzeContent(text);
       setResult(data);
@@ -100,21 +87,22 @@ function App() {
     } catch (error: any) {
       console.error("Analysis failed:", error);
       
-      // API 키가 없거나 잘못된 프로젝트 키인 경우 다시 선택하도록 유도
       if (error.message === "API_KEY_INVALID_OR_MISSING") {
         setIsKeyRequired(true);
+        setErrorType('KEY');
         setStatus(AnalysisStatus.IDLE);
         await handleOpenKeySelector();
         return;
       }
 
-      setStatus(AnalysisStatus.ERROR);
-      // 사용자에게 더 친절한 에러 메시지
-      if (error.message?.includes("User location is required")) {
-          alert("위치 정보가 필요한 작업입니다. 브라우저의 위치 권한을 허용해주세요.");
-      } else {
-          alert("분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      if (error.message === "MODEL_OVERLOADED") {
+        setErrorType('OVERLOADED');
+        setStatus(AnalysisStatus.ERROR);
+        return;
       }
+
+      setErrorType('GENERAL');
+      setStatus(AnalysisStatus.ERROR);
     }
   };
 
@@ -133,7 +121,7 @@ function App() {
       <header className="bg-white/90 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-50 no-print">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-6">
-             <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setStatus(AnalysisStatus.IDLE); setResult(null); }}>
+             <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setStatus(AnalysisStatus.IDLE); setResult(null); setErrorType('NONE'); }}>
                 <div className="w-10 h-10 bg-[#1a4031] rounded-lg flex items-center justify-center shrink-0 border border-[#2f5d48]">
                     <span className="text-orange-500 font-mono font-bold text-lg tracking-tighter">MH</span>
                 </div>
@@ -168,7 +156,7 @@ function App() {
             <InputSection value={inputText} onChange={setInputText} onAnalyze={() => handleAnalyze(inputText)} isAnalyzing={status === AnalysisStatus.ANALYZING} />
         </div>
 
-        {!result && status !== AnalysisStatus.ANALYZING && (
+        {!result && status !== AnalysisStatus.ANALYZING && status !== AnalysisStatus.ERROR && (
           <div className="mt-12 space-y-12 animate-fade-in-up cta-section no-print">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm hover:border-black/30 transition-colors group text-center">
@@ -221,10 +209,28 @@ function App() {
         )}
 
         {status === AnalysisStatus.ERROR && (
-           <div className="text-center p-12 bg-red-50 rounded-xl border border-red-200 shadow-sm">
+           <div className="text-center p-12 bg-red-50 rounded-xl border border-red-200 shadow-sm animate-fade-in">
               <ICONS.Alert className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-red-700 font-mono mb-2">Analysis Failed</h3>
-              <p className="text-red-600 text-lg">분석 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+              <h3 className="text-xl font-bold text-red-700 font-mono mb-2">
+                {errorType === 'OVERLOADED' ? 'AI 서버 부하 발생' : '분석 실패'}
+              </h3>
+              <p className="text-red-600 text-lg mb-6 leading-relaxed">
+                {errorType === 'OVERLOADED' 
+                  ? '현재 사용자가 많아 AI 엔진이 응답을 지연시키고 있습니다. 1~2분 후 다시 시도해주시면 정상적으로 작동합니다.' 
+                  : '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}
+              </p>
+              <button 
+                onClick={() => handleAnalyze(inputText)}
+                className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors font-mono"
+              >
+                RETRY ANALYSIS
+              </button>
+              <button 
+                onClick={() => { setStatus(AnalysisStatus.IDLE); setErrorType('NONE'); }}
+                className="ml-4 text-zinc-500 font-medium hover:underline text-sm"
+              >
+                처음으로 돌아가기
+              </button>
            </div>
         )}
       </main>

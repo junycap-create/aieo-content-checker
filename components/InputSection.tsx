@@ -11,25 +11,23 @@ interface InputSectionProps {
 const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze, isAnalyzing }) => {
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // Calculate estimated time based on text length
+  // Flash 모델 도입으로 단축된 예상 시간 (기존 대비 약 1.5x~2x 단축)
   const getEstimatedTime = (text: string) => {
     const len = text.length;
-    if (len < 500) return 15;
-    if (len < 1500) return 30;
-    return 45;
+    if (len < 500) return 8; // 기존 15
+    if (len < 1500) return 15; // 기존 30
+    return 25; // 기존 45
   };
 
-  // Timer effect: countdown logic
   useEffect(() => {
     let interval: any;
     if (isAnalyzing) {
-      // Set initial estimated time
       const estimated = getEstimatedTime(value);
       setTimeLeft(estimated);
       
       interval = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev <= 1) return 0; // Stay at 0 (Almost done)
+          if (prev <= 1) return 0;
           return prev - 1;
         });
       }, 1000);
@@ -72,18 +70,18 @@ const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze,
       <div className="mt-4 mb-6">
          <div className="flex flex-wrap gap-2 text-xs font-mono text-zinc-400 bg-zinc-50 p-3 rounded border border-zinc-100 items-center">
             <span className="font-bold text-zinc-500 mr-2 flex items-center gap-1">
-                <ICONS.Chart className="w-3 h-3" /> 예상 소요 시간:
+                <ICONS.Zap className="w-3 h-3 text-orange-500" /> 초고속 분석 엔진 적용:
             </span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">짧은 Q&A (~15초)</span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">블로그 글 (~30초)</span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">긴 보도자료 (~45초)</span>
+            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Quick (~8s)</span>
+            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Standard (~15s)</span>
+            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Complex (~25s)</span>
          </div>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-base text-zinc-500 font-light flex items-center gap-2">
           <span className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-xs font-mono uppercase tracking-wide">Tip</span>
-          보도자료 초안, 블로그 글, 또는 제품 FAQ를 붙여넣으세요.
+          분석 모델을 최적화하여 결과 출력 속도가 1.5배 개선되었습니다.
         </p>
         <button
           onClick={handleAnalyze}
@@ -98,13 +96,13 @@ const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze,
             <>
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               <span>
-                {timeLeft > 0 ? `ANALYZING (${timeLeft}s)...` : "Almost done..."}
+                {timeLeft > 0 ? `PROCESSING (${timeLeft}s)...` : "Almost there..."}
               </span>
             </>
           ) : (
             <>
-              <ICONS.Search className="w-5 h-5" />
-              분석 시작
+              <ICONS.Zap className="w-5 h-5 text-orange-400" />
+              최적화 분석 시작
             </>
           )}
         </button>

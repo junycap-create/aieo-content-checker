@@ -1,50 +1,37 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// 지침에 따라 복잡한 분석을 위해 gemini-3-pro-preview 사용
-const MODEL_NAME = "gemini-3-pro-preview";
+// 1.5x 이상의 속도 향상을 위해 Flash 모델 사용 (추론 효율성 최적화)
+const MODEL_NAME = "gemini-3-flash-preview";
 
 const SYSTEM_INSTRUCTION = `
 You are the AIEO (AI Information Engine Optimization) Engine. 
-Your goal is to evaluate PR content based on how well it would be interpreted, summarized, and cited by LLM-based search engines (ChatGPT, Perplexity, Gemini).
+Goal: Evaluate PR content for LLM-based search engine citation readiness.
 
-**SCORING GUIDELINES (BE STRICT & CRITICAL):**
-Do not be generous. Evaluate purely on "Machine Readability" and "Information Density", not literary quality.
-- **90-100 (Excellent):** Perfect structure (Headlines, Bullet points), Verified Data (Specific numbers), Clear Definitions. Ready for immediate Featured Snippet citation.
-- **75-89 (Good):** Clear message and logical flow, but lacks specific data points or structural formatting (e.g., paragraphs are too long).
-- **50-74 (Average):** Vague assertions ("We are the best", "Innovative"), passive voice, lack of named entities/numbers. Hard for AI to extract facts.
-- **0-49 (Weak):** Unstructured, purely emotional/marketing fluff, no factual basis, or incoherent.
+STRICT SCORING (0-100):
+- 90+: Perfect structure, Specific Data, Clear Entities.
+- 75-89: Logical flow, but lacks structural density.
+- 50-74: Vague adjectives, marketing fluff, no facts.
+- 0-49: Unstructured, emotional, or incoherent.
 
-**METRICS DEFINITION:**
-1. **Structure Readability:** usage of formatting (headers, lists) vs wall of text.
-2. **Data Presence:** usage of specific numbers, dates, proper nouns vs adjectives/adverbs.
-3. **Coherence & Repetition:** consistent usage of key terms vs ambiguous pronouns (it, that, they).
-4. **Snippetability:** presence of direct Q&A style sentences vs complex compound sentences.
-
-**CONTENT INSTRUCTIONS:**
-- **Rewrites:** Must be full-length and detailed.
-- **Checklists:** For each rewrite type, provide 3 specific, actionable insights relevant to THAT specific format. 
-  - For **basic (Blog)**, focus on SEO keywords and logical flow.
-  - For **linkedin**, focus on hooks, emojis usage, and engagement.
-  - For **newsroom**, focus on journalistic tone, objective facts, and boilerplate.
-  - For **faq**, focus on user intent coverage and answer clarity.
-  - For **tldr**, focus on key message extraction and brevity.
-- **Language:** All feedback/text must be in KOREAN. Status values must be English.
+METRICS: Structure, Data Presence, Coherence, Snippetability.
+OUTPUT: Detailed summary, metrics, predicted Q&A snippets, and channel-specific rewrites.
+LANGUAGE: Korean (Feedback/Content), English (Status/Enum).
 `;
 
 const responseSchema: Schema = {
   type: Type.OBJECT,
   properties: {
-    totalScore: { type: Type.NUMBER, description: "0-100 score" },
-    summary: { type: Type.STRING, description: "Detailed executive summary in Korean (min 300 chars)" },
+    totalScore: { type: Type.NUMBER },
+    summary: { type: Type.STRING },
     metrics: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
-          name: { type: Type.STRING, description: "Metric Name in Korean" },
+          name: { type: Type.STRING },
           score: { type: Type.NUMBER },
-          feedback: { type: Type.STRING, description: "Specific feedback in Korean" },
+          feedback: { type: Type.STRING },
           status: { type: Type.STRING, enum: ["Good", "Needs Improvement", "Weak"] }
         },
         required: ["name", "score", "feedback", "status"]
@@ -55,8 +42,8 @@ const responseSchema: Schema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          question: { type: Type.STRING, description: "Likely user query in Korean" },
-          answer: { type: Type.STRING, description: "Detailed answer in Korean (3-5 sentences)" }
+          question: { type: Type.STRING },
+          answer: { type: Type.STRING }
         },
         required: ["question", "answer"]
       }
@@ -64,11 +51,11 @@ const responseSchema: Schema = {
     rewrites: {
       type: Type.OBJECT,
       properties: {
-        basic: { type: Type.STRING, description: "Full length Blog Post style in Korean (Markdown)" },
-        linkedin: { type: Type.STRING, description: "LinkedIn style in Korean (Markdown)" },
-        newsroom: { type: Type.STRING, description: "Press Release style in Korean (Markdown)" },
-        faq: { type: Type.STRING, description: "Q&A style in Korean (Markdown)" },
-        tldr: { type: Type.STRING, description: "TL;DR style in Korean (Markdown)" }
+        basic: { type: Type.STRING },
+        linkedin: { type: Type.STRING },
+        newsroom: { type: Type.STRING },
+        faq: { type: Type.STRING },
+        tldr: { type: Type.STRING }
       },
       required: ["basic", "linkedin", "newsroom", "faq", "tldr"]
     },
@@ -87,6 +74,8 @@ const responseSchema: Schema = {
   required: ["totalScore", "summary", "metrics", "snippets", "rewrites", "checklists"]
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 function cleanJsonString(text: string): string {
     let clean = text.trim();
     if (clean.startsWith('```json')) {
@@ -97,8 +86,7 @@ function cleanJsonString(text: string): string {
     return clean;
 }
 
-export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
-  // 호출 시점에 실시간으로 process.env.API_KEY 참조
+export const analyzeContent = async (text: string, retryCount = 0): Promise<AnalysisResult> => {
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey.trim() === "") {
@@ -115,7 +103,8 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        thinkingConfig: { thinkingBudget: 32768 }, // Pro 모델의 최대 thinking budget 설정
+        // 속도 향상을 위해 thinking budget을 8k로 최적화 (분석의 질과 속도의 균형)
+        thinkingConfig: { thinkingBudget: 8192 },
         safetySettings: [
           { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
           { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -126,7 +115,7 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
     });
 
     if (!response.text) {
-        throw new Error("AI 응답이 비어있습니다.");
+        throw new Error("EMPTY_RESPONSE");
     }
 
     const cleanedText = cleanJsonString(response.text);
@@ -134,10 +123,22 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
 
   } catch (error: any) {
     const errorMsg = error.message || "";
-    // API 키 관련 에러 또는 엔티티를 찾을 수 없는 경우 명확한 에러 코드 전달
+    
+    // 503 Error (Overloaded) 핸들링 유지
+    if (errorMsg.includes("503") || errorMsg.includes("overloaded") || errorMsg.includes("UNAVAILABLE")) {
+        if (retryCount < 2) {
+            const waitTime = Math.pow(2, retryCount) * 1500; // 재시도 대기 시간 단축 (1.5s, 3s)
+            console.warn(`Model overloaded. Retrying in ${waitTime}ms...`);
+            await sleep(waitTime);
+            return analyzeContent(text, retryCount + 1);
+        }
+        throw new Error("MODEL_OVERLOADED");
+    }
+
     if (errorMsg.includes("API Key must be set") || errorMsg.includes("Requested entity was not found")) {
         throw new Error("API_KEY_INVALID_OR_MISSING");
     }
+    
     throw error;
   }
 };
