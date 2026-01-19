@@ -2,8 +2,8 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// Use a model capable of Search Grounding
-const MODEL_NAME = "gemini-2.5-flash";
+// 지침에 따라 텍스트 작업을 위한 최신 모델 사용
+const MODEL_NAME = "gemini-3-flash-preview";
 
 const SYSTEM_INSTRUCTION = `
 You are the AIEO (AI Information Engine Optimization) Engine. 
@@ -88,10 +88,8 @@ const responseSchema: Schema = {
   required: ["totalScore", "summary", "metrics", "snippets", "rewrites", "checklists"]
 };
 
-// Helper to clean markdown json blocks if the model ignores instructions (fallback)
 function cleanJsonString(text: string): string {
     let clean = text.trim();
-    // Remove markdown code blocks if present
     if (clean.startsWith('```json')) {
         clean = clean.replace(/^```json/, '').replace(/```\s*$/, '');
     } else if (clean.startsWith('```')) {
@@ -101,10 +99,15 @@ function cleanJsonString(text: string): string {
 }
 
 export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
+  // 호출 직전에 process.env.API_KEY를 참조하여 GoogleGenAI 인스턴스 생성
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error("API_KEY_MISSING");
+  }
+
   try {
-    // Initialize Gemini Client inside the function to avoid top-level errors during script load
-    // and ensure it uses the key available at runtime in a browser environment.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
@@ -123,24 +126,17 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
     });
 
     if (!response.text) {
-        throw new Error("No response generated from AI");
+        throw new Error("AI 응답이 비어있습니다.");
     }
 
-    // 1. Parse JSON Content
     const cleanedText = cleanJsonString(response.text);
-    let result: AnalysisResult;
-    try {
-        result = JSON.parse(cleanedText) as AnalysisResult;
-    } catch (e) {
-        console.error("JSON Parse Error:", e);
-        console.log("Raw Text:", response.text);
-        throw new Error("AI analysis response was not valid JSON.");
+    return JSON.parse(cleanedText) as AnalysisResult;
+
+  } catch (error: any) {
+    // "Requested entity was not found" 에러는 대개 API 키 문제이므로 상위로 전달하여 처리
+    if (error.message?.includes("Requested entity was not found")) {
+        throw new Error("API_KEY_INVALID");
     }
-
-    return result;
-
-  } catch (error) {
-    console.error("AI Analysis Failed:", error);
     throw error;
   }
 };
