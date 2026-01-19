@@ -28,13 +28,23 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #fafafa; /* Lighter, cleaner background */
-        color: #18181b; /* Zinc-900 for high contrast text */
+        background-color: #fafafa;
+        color: #18181b;
       }
       h1, h2, h3, h4, h5, h6, .font-mono {
         font-family: 'JetBrains Mono', monospace;
       }
     </style>
+    <script>
+      // Shim process.env for browser compatibility before loading the app
+      window.process = {
+        env: {
+          NODE_ENV: 'production',
+          // The actual API_KEY will be injected by the build system or available globally if set in Vercel
+          API_KEY: '' 
+        }
+      };
+    </script>
   <script type="importmap">
 {
   "imports": {
@@ -50,5 +60,7 @@
 </head>
   <body>
     <div id="root"></div>
+    <!-- Load the main entry point as an ES module -->
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>
