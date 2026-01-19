@@ -1,7 +1,7 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// 복잡한 텍스트 분석 및 추론 작업을 위해 gemini-3-pro-preview 사용
+// 지침에 따라 복잡한 분석을 위해 gemini-3-pro-preview 사용
 const MODEL_NAME = "gemini-3-pro-preview";
 
 const SYSTEM_INSTRUCTION = `
@@ -98,7 +98,7 @@ function cleanJsonString(text: string): string {
 }
 
 export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
-  // 항상 최신 process.env.API_KEY를 참조합니다.
+  // 호출 시점에 실시간으로 process.env.API_KEY 참조
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey.trim() === "") {
@@ -115,7 +115,7 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        thinkingConfig: { thinkingBudget: 16384 }, // 분석의 질을 높이기 위한 thinking budget 설정
+        thinkingConfig: { thinkingBudget: 32768 }, // Pro 모델의 최대 thinking budget 설정
         safetySettings: [
           { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
           { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -134,7 +134,7 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
 
   } catch (error: any) {
     const errorMsg = error.message || "";
-    // API 키가 없거나, 잘못된 프로젝트(Requested entity was not found)인 경우
+    // API 키 관련 에러 또는 엔티티를 찾을 수 없는 경우 명확한 에러 코드 전달
     if (errorMsg.includes("API Key must be set") || errorMsg.includes("Requested entity was not found")) {
         throw new Error("API_KEY_INVALID_OR_MISSING");
     }

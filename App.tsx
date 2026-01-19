@@ -36,12 +36,15 @@ function App() {
   const handleOpenKeySelector = async () => {
     const aistudio = (window as any).aistudio;
     if (aistudio) {
-      // 키 선택창을 엽니다. (billing 가이드 포함)
-      await aistudio.openSelectKey();
-      // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행합니다.
-      setIsKeyRequired(false);
+      try {
+        await aistudio.openSelectKey();
+        // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행합니다.
+        setIsKeyRequired(false);
+      } catch (err) {
+        console.error("Key selection failed:", err);
+      }
     } else {
-      alert("이 브라우저 환경에서는 API 키 자동 설정을 지원하지 않습니다. Vercel 환경 변수를 수동으로 확인해주세요.");
+      alert("이 브라우저 환경에서는 API 키 자동 설정을 지원하지 않습니다. Vercel 환경 변수 설정을 다시 확인해주세요.");
     }
   };
 
@@ -51,7 +54,7 @@ function App() {
       const aistudio = (window as any).aistudio;
       if (aistudio) {
         const hasKey = await aistudio.hasSelectedApiKey();
-        // 환경 변수 process.env.API_KEY가 있거나 이미 키를 선택했다면 OK
+        // process.env.API_KEY가 있거나 이미 키를 선택했다면 OK
         const isReady = (process.env.API_KEY && process.env.API_KEY !== "") || hasKey;
         setIsKeyRequired(!isReady);
       }
@@ -63,6 +66,18 @@ function App() {
     if (isMaintenanceMode) {
       alert("현재 시스템 점검 중입니다.");
       return;
+    }
+
+    // 1차 API 키 체크
+    const currentApiKey = process.env.API_KEY;
+    const aistudio = (window as any).aistudio;
+    if ((!currentApiKey || currentApiKey === "") && aistudio) {
+      const hasKey = await aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        setIsKeyRequired(true);
+        await handleOpenKeySelector();
+        // 키 선택 후 process.env.API_KEY가 주입될 때까지 잠시 대기하지 않고 바로 진행 시도 (가이드라인 준수)
+      }
     }
 
     setStatus(AnalysisStatus.ANALYZING);
@@ -94,7 +109,12 @@ function App() {
       }
 
       setStatus(AnalysisStatus.ERROR);
-      alert("분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      // 사용자에게 더 친절한 에러 메시지
+      if (error.message?.includes("User location is required")) {
+          alert("위치 정보가 필요한 작업입니다. 브라우저의 위치 권한을 허용해주세요.");
+      } else {
+          alert("분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
     }
   };
 
@@ -204,7 +224,7 @@ function App() {
            <div className="text-center p-12 bg-red-50 rounded-xl border border-red-200 shadow-sm">
               <ICONS.Alert className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-red-700 font-mono mb-2">Analysis Failed</h3>
-              <p className="text-red-600 text-lg">일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+              <p className="text-red-600 text-lg">분석 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
            </div>
         )}
       </main>

@@ -54,7 +54,7 @@
       window.process = window.process || {};
       window.process.env = window.process.env || {};
       if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
-      // API_KEY가 정의되어 있지 않다면 빈 문자열로 초기화합니다.
+      // API_KEY가 정의되어 있지 않다면 빈 문자열로 초기화하여 ReferenceError를 방지합니다.
       if (typeof window.process.env.API_KEY === 'undefined') window.process.env.API_KEY = '';
     </script>
   <script type="importmap">
