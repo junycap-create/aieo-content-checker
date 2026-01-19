@@ -36,14 +36,10 @@
       }
     </style>
     <script>
-      // Shim process.env for browser compatibility before loading the app
-      window.process = {
-        env: {
-          NODE_ENV: 'production',
-          // The actual API_KEY will be injected by the build system or available globally if set in Vercel
-          API_KEY: '' 
-        }
-      };
+      // Ensure window.process.env exists without overwriting potentially injected values
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
     </script>
   <script type="importmap">
 {

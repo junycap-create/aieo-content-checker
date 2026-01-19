@@ -2,9 +2,6 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 // Use a model capable of Search Grounding
 const MODEL_NAME = "gemini-2.5-flash";
 
@@ -105,6 +102,10 @@ function cleanJsonString(text: string): string {
 
 export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
   try {
+    // Initialize Gemini Client inside the function to avoid top-level errors during script load
+    // and ensure it uses the key available at runtime in a browser environment.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: text,
