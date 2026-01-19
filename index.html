@@ -50,13 +50,12 @@
       }
     </style>
     <script>
-      // 환경에서 이미 주입된 process 객체가 있다면 보존하고, 없으면 생성합니다.
+      // 브라우저 환경에서 process.env 객체가 유효하도록 초기화합니다.
       window.process = window.process || {};
       window.process.env = window.process.env || {};
-      // NODE_ENV가 설정되지 않은 경우에만 기본값을 지정합니다.
-      if (!window.process.env.NODE_ENV) {
-        window.process.env.NODE_ENV = 'production';
-      }
+      if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
+      // API_KEY가 정의되어 있지 않다면 빈 문자열로 초기화합니다.
+      if (typeof window.process.env.API_KEY === 'undefined') window.process.env.API_KEY = '';
     </script>
   <script type="importmap">
 {

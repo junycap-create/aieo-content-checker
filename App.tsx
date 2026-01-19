@@ -20,8 +20,6 @@ const ResultSkeleton = () => (
   </div>
 );
 
-// Note: Manual global declaration for window.aistudio removed to avoid conflict with environment-provided types.
-
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
@@ -34,51 +32,37 @@ function App() {
   const [adminLogs, setAdminLogs] = useState<AnalysisLog[]>([]);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
 
-  // Check if API key is already set via environment or selection
+  // API 키 선택 창을 여는 헬퍼 함수
+  const handleOpenKeySelector = async () => {
+    const aistudio = (window as any).aistudio;
+    if (aistudio) {
+      // 키 선택창을 엽니다. (billing 가이드 포함)
+      await aistudio.openSelectKey();
+      // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행합니다.
+      setIsKeyRequired(false);
+    } else {
+      alert("이 브라우저 환경에서는 API 키 자동 설정을 지원하지 않습니다. Vercel 환경 변수를 수동으로 확인해주세요.");
+    }
+  };
+
+  // 앱 시작 시 API 키 존재 여부 확인
   useEffect(() => {
     const checkApiKey = async () => {
-      if (process.env.API_KEY && process.env.API_KEY !== "") {
-        setIsKeyRequired(false);
-        return;
-      }
-      // Access pre-configured aistudio helper via type assertion
       const aistudio = (window as any).aistudio;
       if (aistudio) {
         const hasKey = await aistudio.hasSelectedApiKey();
-        setIsKeyRequired(!hasKey);
-      } else {
-        setIsKeyRequired(!process.env.API_KEY);
+        // 환경 변수 process.env.API_KEY가 있거나 이미 키를 선택했다면 OK
+        const isReady = (process.env.API_KEY && process.env.API_KEY !== "") || hasKey;
+        setIsKeyRequired(!isReady);
       }
     };
     checkApiKey();
   }, []);
 
-  const handleOpenKeySelector = async () => {
-    const aistudio = (window as any).aistudio;
-    if (aistudio) {
-      await aistudio.openSelectKey();
-      setIsKeyRequired(false); // 가이드라인에 따라 선택 창을 연 후에는 성공으로 가정하고 진행
-    } else {
-      alert("이 환경에서는 API 키 선택기를 지원하지 않습니다. Vercel 환경 변수 설정을 다시 확인해주세요.");
-    }
-  };
-
   const handleAnalyze = async (text: string = inputText) => {
     if (isMaintenanceMode) {
       alert("현재 시스템 점검 중입니다.");
       return;
-    }
-
-    // API 키 확인 및 유도
-    const currentApiKey = process.env.API_KEY;
-    const aistudio = (window as any).aistudio;
-    if (!currentApiKey && aistudio) {
-      const hasKey = await aistudio.hasSelectedApiKey();
-      if (!hasKey) {
-        setIsKeyRequired(true);
-        await handleOpenKeySelector();
-        return;
-      }
     }
 
     setStatus(AnalysisStatus.ANALYZING);
@@ -99,13 +83,13 @@ function App() {
       setAdminLogs(prev => [newLog, ...prev]);
 
     } catch (error: any) {
-      console.error(error);
+      console.error("Analysis failed:", error);
       
-      // API 키가 없거나 잘못된 경우 (Requested entity was not found 포함)
-      if (error.message === "API_KEY_INVALID_OR_MISSING" || error.message?.includes("An API Key must be set")) {
+      // API 키가 없거나 잘못된 프로젝트 키인 경우 다시 선택하도록 유도
+      if (error.message === "API_KEY_INVALID_OR_MISSING") {
         setIsKeyRequired(true);
-        await handleOpenKeySelector();
         setStatus(AnalysisStatus.IDLE);
+        await handleOpenKeySelector();
         return;
       }
 

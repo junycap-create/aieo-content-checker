@@ -98,9 +98,13 @@ function cleanJsonString(text: string): string {
 }
 
 export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
-  // 호출 직전에 최신 API 키를 참조하여 GoogleGenAI 인스턴스 생성
-  const apiKey = process.env.API_KEY || "";
+  // 항상 최신 process.env.API_KEY를 참조합니다.
+  const apiKey = process.env.API_KEY;
   
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error("API_KEY_INVALID_OR_MISSING");
+  }
+
   try {
     const ai = new GoogleGenAI({ apiKey });
     
@@ -111,6 +115,7 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
+        thinkingConfig: { thinkingBudget: 16384 }, // 분석의 질을 높이기 위한 thinking budget 설정
         safetySettings: [
           { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
           { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -128,8 +133,8 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
     return JSON.parse(cleanedText) as AnalysisResult;
 
   } catch (error: any) {
-    // API 키 관련 에러 또는 엔티티를 찾을 수 없는 경우 명확한 에러 코드 전달
     const errorMsg = error.message || "";
+    // API 키가 없거나, 잘못된 프로젝트(Requested entity was not found)인 경우
     if (errorMsg.includes("API Key must be set") || errorMsg.includes("Requested entity was not found")) {
         throw new Error("API_KEY_INVALID_OR_MISSING");
     }
