@@ -5,7 +5,6 @@ import InputSection from './components/InputSection';
 import UserGuideModal from './components/UserGuideModal';
 import MessageHouseCTA from './components/MessageHouseCTA';
 import ServiceIntroduction from './components/ServiceIntroduction';
-import GEOCard from './components/GEOCard'; // New component
 import { ICONS, APP_NAME, APP_VERSION } from './constants';
 
 const ScoreCard = React.lazy(() => import('./components/ScoreCard'));
@@ -118,7 +117,7 @@ function App() {
       <main className="max-w-5xl mx-auto px-6 py-16 relative z-10 print:py-0">
         <div className="text-center mb-16 hero-section no-print">
            <div className="inline-block px-4 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-600 text-sm font-mono font-medium mb-6 shadow-sm">AI-Search & Generative Engine Optimization</div>
-           <h2 className="text-4xl md:text-6xl font-black text-zinc-900 mb-6 tracking-tight leading-tight">AI Visibility Optimizer</h2>
+           <h2 className="text-4xl md:text-6xl font-black text-zinc-900 mb-6 tracking-tight leading-tight">AI 검색 최적화(AIEO) 진단 도구</h2>
            <p className="text-zinc-600 text-xl max-w-3xl mx-auto leading-relaxed font-light">
              당신의 콘텐츠가 단순한 검색 노출을 넘어 <span className="font-semibold text-black bg-zinc-200/50 px-1 rounded">AI 검색의 핵심 답변</span>으로 인용되도록 최적화하세요.
            </p>
@@ -146,34 +145,9 @@ function App() {
                   <div className="md:col-span-2"><MetricGrid metrics={result.metrics} /></div>
                </div>
 
-               {/* GEO Insight Integration */}
-               <div className="break-inside-avoid">
-                  <GEOCard data={result.geoInsight} />
-               </div>
-
                <div className="w-full break-inside-avoid"><SnippetPreview snippets={result.snippets} /></div>
                <div className="break-inside-avoid"><RewriteEngine rewrites={result.rewrites} checklists={result.checklists} /></div>
              </Suspense>
-
-             {/* SEO & GEO Integration Checklist (Self-Check) */}
-             <div className="bg-zinc-100 p-8 rounded-xl border border-zinc-200 no-print">
-                <h3 className="text-xl font-bold font-mono mb-6 flex items-center gap-2">
-                    <ICONS.Shield className="w-6 h-6" /> System Optimization Checklist
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                        "JSON-LD 기반 구조화 데이터 사이트 반영 완료",
-                        "GEO(Generative Engine Optimization) 지표 산출 알고리즘 적용",
-                        "엔터티 밀도(Entity Density) 기반 인용 확률 분석 도입",
-                        "시맨틱 HTML5 구조 강화를 통한 AI 크롤러 친화도 개선",
-                        "AI Overviews(AIO) 대응 답변 최적화 지침 반영"
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 text-sm text-zinc-600 bg-white p-3 rounded-lg border border-zinc-100">
-                            <ICONS.Check className="w-4 h-4 text-green-600 shrink-0" /> {item}
-                        </div>
-                    ))}
-                </div>
-             </div>
 
              <div className="pt-12 no-print"><MessageHouseCTA /></div>
           </div>
