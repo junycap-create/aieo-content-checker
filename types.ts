@@ -26,6 +26,13 @@ export interface RewriteSet {
   tldr: string;
 }
 
+export interface GeoInsight {
+  visibilityIndex: number;
+  entityDensity: number;
+  citationConfidence: number;
+  optimizationChecklist: string[];
+}
+
 export interface AnalysisResult {
   totalScore: number;
   summary: string;
@@ -39,33 +46,9 @@ export interface AnalysisResult {
     faq: string[];
     tldr: string[];
   };
+  geoInsight: GeoInsight; // New field for GEO/AIO optimization
 }
 
-// Realtime Analysis Types
-export interface FactCheckItem {
-  claim: string;
-  verification: 'Verified' | 'Contradicted' | 'Unverified';
-  comment: string;
-  sourceUrl?: string;
-}
-
-export interface GroundingSourceItem {
-  uri: string;
-  title: string;
-}
-
-export interface CompetitorItem {
-  title: string;
-  sourceName: string;
-}
-
-export interface RealtimeAnalysisData {
-  factChecks: FactCheckItem[];
-  groundingSources: GroundingSourceItem[];
-  competitors: CompetitorItem[];
-}
-
-// Admin Types
 export interface AnalysisLog {
   id: string;
   userEmail: string;
@@ -76,9 +59,34 @@ export interface AnalysisLog {
   status: 'Completed' | 'Failed';
 }
 
+// Fix: Added missing AdminStats interface for AdminDashboard
 export interface AdminStats {
   totalAnalyses: number;
   activeUsers: number;
   avgScore: number;
   growthRate: number;
+}
+
+// Fix: Added missing types for RealtimeAnalysis component
+export interface FactCheck {
+  claim: string;
+  verification: 'Verified' | 'Contradicted' | 'Unverified';
+  comment: string;
+  sourceUrl?: string;
+}
+
+export interface GroundingSource {
+  uri: string;
+  title: string;
+}
+
+export interface CompetitorTopic {
+  title: string;
+  sourceName: string;
+}
+
+export interface RealtimeAnalysisData {
+  factChecks: FactCheck[];
+  groundingSources: GroundingSource[];
+  competitors: CompetitorTopic[];
 }

@@ -1,20 +1,27 @@
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// 초고속 처리를 위해 Flash 모델 고정
 const MODEL_NAME = "gemini-3-flash-preview";
 
 const SYSTEM_INSTRUCTION = `
-You are the AIEO (AI Information Engine Optimization) Engine. 
-Evaluate PR content for LLM citation readiness. Be strict.
+You are the world-class GEO (Generative Engine Optimization) & AIEO Specialist. 
+Your goal is to transform standard PR content into "AI-First" authority content.
 
-SCORING (0-100):
-90+: Structurally perfect, Data-heavy.
-75-89: Clear flow, lacks density.
-<74: Vague adjectives, marketing fluff.
+GEO ANALYSIS CRITERIA:
+1. **Entity Density:** High usage of proper nouns and specific named entities.
+2. **Authority & Citability:** Presence of unique data, quotes, and verifiable facts that AI models prefer to cite as sources.
+3. **Direct Answerability:** How easily can a Generative Engine (AIO) convert this into a direct answer.
+4. **Information Gain:** Does this provide new information compared to common knowledge?
 
-METRICS: Structure, Data, Coherence, Snippetability.
-LANGUAGE: Korean (All content/feedback). Status: English.
+STRICT SCORING (0-100):
+90+: High Authority, Verifiable Data, Excellent Structure.
+75-89: Clear, but needs more "Cite-able" elements (Specific names, stats).
+<74: Generic marketing fluff, lack of entities, hard for AI to cite.
+
+OUTPUT REQUIREMENTS:
+- All text feedback in KOREAN.
+- Strictly follow the JSON Schema.
+- Provide a 'geoInsight' object focusing on Visibility and Citability.
 `;
 
 const responseSchema: Schema = {
@@ -67,9 +74,19 @@ const responseSchema: Schema = {
         tldr: { type: Type.ARRAY, items: { type: Type.STRING } }
       },
       required: ["basic", "linkedin", "newsroom", "faq", "tldr"]
+    },
+    geoInsight: {
+      type: Type.OBJECT,
+      properties: {
+        visibilityIndex: { type: Type.NUMBER },
+        entityDensity: { type: Type.NUMBER },
+        citationConfidence: { type: Type.NUMBER },
+        optimizationChecklist: { type: Type.ARRAY, items: { type: Type.STRING } }
+      },
+      required: ["visibilityIndex", "entityDensity", "citationConfidence", "optimizationChecklist"]
     }
   },
-  required: ["totalScore", "summary", "metrics", "snippets", "rewrites", "checklists"]
+  required: ["totalScore", "summary", "metrics", "snippets", "rewrites", "checklists", "geoInsight"]
 };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -94,11 +111,7 @@ export const analyzeContent = async (text: string, retryCount = 0): Promise<Anal
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        thinkingConfig: { thinkingBudget: 4096 }, // 속도와 분석 질의 균형을 위해 4k로 최적화
-        safetySettings: [
-          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-        ],
+        thinkingConfig: { thinkingBudget: 4096 },
       }
     });
 
@@ -114,7 +127,6 @@ export const analyzeContent = async (text: string, retryCount = 0): Promise<Anal
         }
         throw new Error("MODEL_OVERLOADED");
     }
-    if (errorMsg.includes("API Key") || errorMsg.includes("not found")) throw new Error("API_KEY_INVALID_OR_MISSING");
     throw error;
   }
 };
