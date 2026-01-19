@@ -7,9 +7,8 @@ interface ScoreCardProps {
 }
 
 const ScoreCard: React.FC<ScoreCardProps> = ({ score, summary }) => {
-  const data = [{ name: 'Score', value: score, fill: '#18181b' }]; // Using black fill for NVG8 style
+  const data = [{ name: 'Score', value: score, fill: '#18181b' }];
   
-  // Determine color based on score (only text)
   const getScoreColor = (val: number) => {
     if (val >= 80) return 'text-green-600';
     if (val >= 60) return 'text-indigo-600';
@@ -24,11 +23,11 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ score, summary }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8 flex flex-col items-center justify-center relative overflow-hidden h-full">
+    <div className="bg-white rounded-xl shadow-lg border border-zinc-200 p-8 flex flex-col items-center justify-center h-full min-h-[400px]">
       <h3 className="text-zinc-400 font-bold font-mono text-sm uppercase tracking-widest mb-6">Total AIEO Score</h3>
       
-      <div className="relative w-56 h-56 mb-6">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="relative w-full h-64 mb-6" style={{ minWidth: '200px' }}>
+        <ResponsiveContainer width="100%" height="100%" debounce={1}>
           <RadialBarChart 
             innerRadius="80%" 
             outerRadius="100%" 
@@ -41,7 +40,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ score, summary }) => {
             <RadialBar background dataKey="value" cornerRadius={40} />
           </RadialBarChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className={`text-6xl font-black font-mono tracking-tighter ${getScoreColor(score)}`}>{score}</span>
             <span className="text-sm font-bold text-zinc-400 mt-2 font-mono tracking-wider">{getScoreLabel(score)}</span>
         </div>
