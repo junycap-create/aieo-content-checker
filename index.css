@@ -18,6 +18,26 @@ h1, h2, h3, h4, h5, h6, .font-mono {
   min-height: 0;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@media (max-width: 640px) {
+  .markdown-body {
+    font-size: 14px !important;
+  }
+  .markdown-body p {
+    line-height: 1.6 !important;
+  }
+}
+
 @media print { 
   .no-print { display: none !important; } 
   body { background-color: white !important; }

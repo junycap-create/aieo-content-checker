@@ -234,11 +234,11 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-16 relative z-10 print:py-0">
-        <div className="text-center mb-16 hero-section no-print">
-           <div className="inline-block px-4 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-600 text-sm font-mono font-medium mb-6 shadow-sm">AI Information Engine Optimization</div>
-           <h2 className="text-4xl md:text-6xl font-black text-zinc-900 mb-6 tracking-tight leading-tight">AI 정보 엔진 최적화(AIEO) 진단 도구</h2>
-           <p className="text-zinc-600 text-xl max-w-3xl mx-auto leading-relaxed font-light">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-16 relative z-10 print:py-0">
+        <div className="text-center mb-10 md:mb-16 hero-section no-print">
+           <div className="inline-block px-4 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-600 text-[10px] sm:text-sm font-mono font-medium mb-4 md:mb-6 shadow-sm">AI Information Engine Optimization</div>
+           <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-zinc-900 mb-4 md:mb-6 tracking-tight leading-tight">AI 정보 엔진 최적화(AIEO) 진단 도구</h2>
+           <p className="text-zinc-600 text-base sm:text-xl max-w-3xl mx-auto leading-relaxed font-light">
              당신의 콘텐츠가 단순한 검색 노출을 넘어 <span className="font-semibold text-black bg-zinc-200/50 px-1 rounded">AI 검색의 핵심 답변</span>으로 인용되도록 최적화하세요.
            </p>
         </div>
@@ -248,23 +248,18 @@ function App() {
         </div>
 
         {status === AnalysisStatus.COMPLETED && result && (
-          <div id="analysis-report" className="space-y-20 animate-fade-in pb-20 result-section">
-             <div className="flex items-center justify-between border-b-2 border-zinc-100 pb-4 sticky top-[73px] bg-zinc-50/95 backdrop-blur-sm z-40 py-4 no-print">
-                <div className="flex items-center gap-4">
-                    <div className="w-3 h-10 bg-black rounded-sm"></div>
-                    <h2 className="text-3xl font-bold font-mono text-zinc-900 uppercase">진단 결과 보고서 (Analysis Report)</h2>
+          <div id="analysis-report" className="space-y-8 sm:space-y-20 animate-fade-in pb-20 result-section">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 no-print">
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-2 sm:w-3 h-8 sm:h-10 bg-black rounded-sm"></div>
+                    <h2 className="text-xl sm:text-3xl font-bold font-mono text-zinc-900 uppercase">진단 결과 보고서</h2>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={handleReset} className="flex items-center gap-2 bg-white hover:bg-zinc-100 text-zinc-600 px-4 py-2 rounded-lg font-medium border border-zinc-200 transition-colors no-print">
-                        <ICONS.Plus className="w-4 h-4" /> 새 분석 시작
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button onClick={handleReset} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white hover:bg-zinc-100 text-zinc-600 px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-sm font-medium border border-zinc-200 transition-colors">
+                        <ICONS.Plus className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="whitespace-nowrap">새 분석</span>
                     </button>
-                    <nav className="hidden lg:flex items-center gap-1 mr-4 bg-zinc-100 p-1 rounded-lg border border-zinc-200">
-                        <button onClick={() => document.getElementById('score-section')?.scrollIntoView({behavior: 'smooth'})} className="px-3 py-1 text-[10px] font-bold font-mono text-zinc-500 hover:text-black transition-colors uppercase">점수 (Score)</button>
-                        <button onClick={() => document.getElementById('snippet-section')?.scrollIntoView({behavior: 'smooth'})} className="px-3 py-1 text-[10px] font-bold font-mono text-zinc-500 hover:text-black transition-colors uppercase">스니펫 (Snippet)</button>
-                        <button onClick={() => document.getElementById('rewrite-section')?.scrollIntoView({behavior: 'smooth'})} className="px-3 py-1 text-[10px] font-bold font-mono text-zinc-500 hover:text-black transition-colors uppercase">리라이트 (Rewrite)</button>
-                    </nav>
-                    <button onClick={handleDownloadPDF} className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-4 py-2 rounded-lg font-medium transition-colors no-print">
-                        <ICONS.Download className="w-4 h-4" /> PDF 리포트 저장
+                    <button onClick={handleDownloadPDF} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-colors">
+                        <ICONS.Download className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="whitespace-nowrap">PDF 저장</span>
                     </button>
                 </div>
              </div>

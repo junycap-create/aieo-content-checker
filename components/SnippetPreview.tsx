@@ -66,50 +66,50 @@ const SnippetPreview: React.FC<SnippetPreviewProps> = ({ snippets }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-2.5 bg-black rounded-lg shrink-0">
-           <ICONS.Search className="w-5 h-5 text-white" />
+    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-4 sm:p-8">
+      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+        <div className="p-2 bg-black rounded-lg shrink-0">
+           <ICONS.Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div>
-            <h3 className="font-bold text-xl text-zinc-900 font-mono">AI 예상 스니펫</h3>
-            <p className="text-sm text-zinc-500 mt-1">Multi-Engine Simulation</p>
+            <h3 className="font-bold text-lg sm:text-xl text-zinc-900 font-mono">AI 예상 스니펫</h3>
+            <p className="text-[10px] sm:text-sm text-zinc-500 mt-0.5 sm:mt-1">Multi-Engine Simulation</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {snippets.map((item, idx) => (
           <div key={idx} className={`bg-zinc-50 border ${getEngineColor(item.engine)} rounded-lg overflow-hidden hover:border-zinc-400 transition-colors group`}>
             {/* Fake Browser/Engine Header */}
-            <div className="bg-white border-b border-zinc-100 px-4 py-3 flex items-center justify-between">
+            <div className="bg-white border-b border-zinc-100 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 shrink-0">
                     {getIcon(item.engine)}
-                    <span className="text-[10px] font-bold font-mono text-zinc-600 uppercase tracking-wide">{getName(item.engine)}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold font-mono text-zinc-600 uppercase tracking-wide">{getName(item.engine)}</span>
                 </div>
-                <div className="flex gap-1.5 shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-zinc-200"></div>
-                    <div className="w-2 h-2 rounded-full bg-zinc-200"></div>
-                    <div className="w-2 h-2 rounded-full bg-zinc-200"></div>
+                <div className="flex gap-1 shrink-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-200"></div>
                 </div>
             </div>
 
-            <div className="p-6">
-                <div className="flex items-start gap-3 mb-4 pb-4 border-b border-zinc-100 border-dashed">
-                    <span className="text-indigo-600 font-mono font-bold text-lg min-w-[20px] shrink-0">Q.</span>
-                    <p className="text-base font-bold text-zinc-900 leading-snug">{item.question}</p>
+            <div className="p-4 sm:p-6">
+                <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-zinc-100 border-dashed">
+                    <span className="text-indigo-600 font-mono font-bold text-base sm:text-lg min-w-[15px] sm:min-w-[20px] shrink-0">Q.</span>
+                    <p className="text-sm sm:text-base font-bold text-zinc-900 leading-snug">{item.question}</p>
                 </div>
-                <div className="flex items-start gap-3">
-                    <span className="text-zinc-400 font-mono font-bold text-lg min-w-[20px] shrink-0">A.</span>
-                    <p className="text-sm text-zinc-600 leading-relaxed">{item.answer}</p>
+                <div className="flex items-start gap-2 sm:gap-3">
+                    <span className="text-zinc-400 font-mono font-bold text-base sm:text-lg min-w-[15px] sm:min-w-[20px] shrink-0">A.</span>
+                    <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">{item.answer}</p>
                 </div>
             </div>
           </div>
         ))}
       </div>
       
-      <div className="mt-8 pt-6 border-t border-zinc-100">
-         <div className="flex items-center gap-3 text-sm text-zinc-400 bg-zinc-50 px-4 py-3 rounded border border-zinc-200">
-            <ICONS.Alert className="w-4 h-4 text-zinc-500 shrink-0" />
+      <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-zinc-100">
+         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-400 bg-zinc-50 px-3 sm:px-4 py-2 sm:py-3 rounded border border-zinc-200">
+            <ICONS.Alert className="w-3 h-3 sm:w-4 sm:h-4 text-zinc-500 shrink-0" />
             <span className="font-mono">AI는 키워드가 아닌 <strong className="text-zinc-700">의도(Intent)</strong>를 추출하여 재구성합니다.</span>
          </div>
       </div>

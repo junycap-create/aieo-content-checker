@@ -61,20 +61,20 @@ const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze,
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8 mb-10 transition-all hover:border-zinc-300">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-4 sm:p-8 mb-6 sm:mb-10 transition-all hover:border-zinc-300">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
           <div className="bg-zinc-100 p-2 rounded-md">
-              <ICONS.Content className="w-6 h-6 text-black" />
+              <ICONS.Content className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
           </div>
-          <h2 className="text-xl font-bold text-zinc-900 font-mono">콘텐츠 입력</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">콘텐츠 입력</h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((ex, idx) => (
                 <button
                     key={idx}
                     onClick={() => handleExampleClick(ex.text)}
-                    className="text-[10px] md:text-xs font-bold font-mono bg-zinc-100 text-zinc-500 px-3 py-1.5 rounded hover:bg-zinc-200 hover:text-zinc-900 transition-all border border-zinc-200"
+                    className="text-[10px] sm:text-xs font-bold font-mono bg-zinc-100 text-zinc-500 px-2 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-zinc-200 hover:text-zinc-900 transition-all border border-zinc-200"
                 >
                     {ex.label}
                 </button>
@@ -84,32 +84,31 @@ const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze,
       
       <div className="relative">
         <textarea
-          className="w-full h-64 p-6 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all resize-y text-zinc-800 text-lg leading-relaxed placeholder:text-zinc-400 placeholder:font-light"
+          className="w-full h-48 sm:h-64 p-4 sm:p-6 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all resize-y text-zinc-800 text-base sm:text-lg leading-relaxed placeholder:text-zinc-400 placeholder:font-light"
           placeholder={PLACEHOLDER_TEXT}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={isAnalyzing}
         />
-        <div className="absolute bottom-4 right-4 text-sm font-mono text-zinc-400 bg-white/80 px-2 py-1 rounded backdrop-blur-sm border border-zinc-100">
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 text-[10px] sm:text-sm font-mono text-zinc-400 bg-white/80 px-2 py-1 rounded backdrop-blur-sm border border-zinc-100">
           {value.length} chars
         </div>
       </div>
 
       <div className="mt-4 mb-6">
-         <div className="flex flex-wrap gap-2 text-xs font-mono text-zinc-400 bg-zinc-50 p-3 rounded border border-zinc-100 items-center">
+         <div className="flex flex-wrap gap-2 text-[10px] sm:text-xs font-mono text-zinc-400 bg-zinc-50 p-2 sm:p-3 rounded border border-zinc-100 items-center">
             <span className="font-bold text-zinc-500 mr-2 flex items-center gap-1">
-                <ICONS.Zap className="w-3 h-3 text-orange-500" /> 초고속 분석 엔진 적용:
+                <ICONS.Zap className="w-3 h-3 text-orange-500" /> 분석 엔진:
             </span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Quick (~8s)</span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Standard (~15s)</span>
-            <span className="bg-white border border-zinc-200 px-2 py-0.5 rounded text-zinc-600">Complex (~25s)</span>
+            <span className="bg-white border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-600">Quick (~8s)</span>
+            <span className="bg-white border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-600">Standard (~15s)</span>
          </div>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-base text-zinc-500 font-light flex items-center gap-2">
-          <span className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-xs font-mono uppercase tracking-wide">Tip</span>
-          분석 모델을 최적화하여 결과 출력 속도가 1.5배 개선되었습니다.
+        <p className="text-sm sm:text-base text-zinc-500 font-light flex items-center gap-2">
+          <span className="bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded text-[10px] sm:text-xs font-mono uppercase tracking-wide">Tip</span>
+          속도가 1.5배 개선되었습니다.
         </p>
         <button
           onClick={handleAnalyze}
