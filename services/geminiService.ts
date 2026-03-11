@@ -2,118 +2,84 @@ import { GoogleGenAI, HarmCategory, HarmBlockThreshold, Schema, Type, ThinkingLe
 import { AnalysisResult, RewriteSet } from "../types";
 
 const MODEL_NAME = "gemini-3-flash-preview";
-const REWRITE_MODEL_NAME = "gemini-3-flash-preview"; // Switched from Pro to Flash for speed as requested
+const REWRITE_MODEL_NAME = "gemini-3-flash-preview";
+
+// Cache keys
+const CACHE_PREFIX = "aieo_cache_";
 
 const ANALYSIS_SYSTEM_INSTRUCTION = `
-You are the world's leading expert in GEO (AI Information Engine Optimization) and AIEO (AI Information Engine Optimization). 
-Your mission is to analyze text and provide "High-Authority Citational Content" metrics.
+Expert in GEO/AIEO. Analyze text for "High-Authority Citational Content".
+RULES:
+1. 엔터티 밀도 (Entity Density): Proper nouns, brands, technical terms.
+2. 인용 신뢰도 (Citation Confidence): Logic & evidence based.
+3. AI 답변 적합성 (AIO Readiness): Structure for AI Overviews.
+4. 정보 이득량 (Information Gain): Unique data/perspective.
 
-GEO & AIO ANALYSIS RULES (Use these Korean titles for 'name' field):
-1. **엔터티 밀도 (Entity Density):** Identify proper nouns, brand names, and technical terms.
-2. **인용 신뢰도 (Citation Confidence):** Evaluate how "cite-able" the content is based on logic and evidence.
-3. **AI 답변 적합성 (AIO Readiness):** Can this be an AI Overview snippet? Focus on structure.
-4. **정보 이득량 (Information Gain):** Unique data or perspective presence.
-
-AI SNIPPET SIMULATION:
-Generate 4 distinct snippets, one for each of these engines:
-- **google**: Focus on direct, factual answers (AI Overview style).
-- **perplexity**: Focus on cited, source-heavy summaries.
-- **chatgpt**: Focus on conversational, explanatory responses.
-- **claude**: Focus on nuanced, helpful, and detailed reasoning.
-
-STRICT SCORING (0-100):
-90+: Authoritative, Data-rich.
-75-89: Clear, but needs more entities.
-<74: Generic marketing fluff.
-
-FEEDBACK GUIDELINES:
-- **Summary:** Provide a comprehensive executive summary (min 5-6 sentences) that covers the overall AIEO readiness, strategic impact, and key competitive advantages.
-- **Metric Feedback:** Provide at least 4-5 detailed, professional sentences for each metric's feedback. Focus on "Why this score was given" and "What specific elements are missing or present".
-- **Actionability:** Include highly specific, technical, and actionable suggestions for improvement that can be applied immediately to improve AI search visibility.
-- **Tone:** Professional, authoritative, and insightful (Consultant-level).
-
-OUTPUT: All fields (summary, feedback, etc.) must be in KOREAN.
+SNIPPETS: Generate 4 snippets (google, perplexity, chatgpt, claude).
+SCORING: 0-100.
+FEEDBACK: Summary (5-6 sentences), Metric Feedback (4-5 sentences each), Actionable tips.
+OUTPUT: KOREAN.
 `;
 
 const REWRITE_SYSTEM_INSTRUCTION = `
-You are the world's leading expert in GEO (AI Information Engine Optimization) and AIEO (AI Information Engine Optimization). 
-Your mission is to transform text into "High-Authority Citational Content" that is perfectly structured for both humans and AI search engines.
-
-CRITICAL JSON SAFETY RULES:
-1. **NO UNESCAPED NEWLINES:** You MUST NOT include literal unescaped newlines inside JSON string values. Use "\\n" instead.
-2. **ESCAPING:** Ensure all special characters are properly escaped for a valid JSON string.
-3. **STRUCTURE:** Follow the schema strictly.
-
-CATEGORY-SPECIFIC STRUCTURES:
-
-- **basic (Blog):**
-  - [Title]: A compelling, SEO-optimized headline.
-  - [Intro]: A hook that defines the problem and the "Information Gain" this post provides.
-  - [Body]: 3 distinct sections using ### Subheadings. Each section must contain detailed analysis, data-backed claims, and entity-rich descriptions.
-  - [Conclusion]: A summary of key takeaways.
-  - *Length: Min 1200 characters.*
-
-- **linkedin (LinkedIn Post):**
-  - [Hook]: A 1-2 line "stop-the-scroll" opening.
-  - [Body]: Break down the core insight into 3-5 clear, bulleted points. **Each bullet point MUST start on a new line with a relevant emoji.**
-  - [Insight]: A brief "why this matters" paragraph.
-  - [CTA]: A question or call to action to drive comments.
-  - *Formatting: Use short sentences and frequent line breaks.*
-  - *Length: Min 700 characters.*
-
-- **newsroom (Press Release):**
-  - [Headline]: Formal and authoritative.
-  - [Dateline]: e.g., [SEOUL, KOREA - Current Date]
-  - [Lead]: The 5Ws (Who, What, When, Where, Why) in the first paragraph.
-  - [Body]: Detailed context preserving **100% of original facts, data points, technical specifications, names, dates, and context**. DO NOT summarize. DO NOT omit any detail. If the original text has 10 data points, the rewrite must have all 10. Restructure for "Citational Confidence" and professional flow, but maintain full depth. Use multiple paragraphs to ensure a comprehensive, high-authority report.
-  - [Quote]: Include a simulated or restructured quote from a "Company Representative" that adds human authority and integrates key data from the text.
-  - [Boilerplate]: A detailed "About" section based on the original text.
-  - *Length: The rewrite MUST be equal to or longer than the original text to ensure zero information loss.*
-
-- **faq (Q&A Structure):**
-  - Format as:
-    Q: [Clear, search-intent driven question]
-    A: [Comprehensive, entity-rich answer]
-  - Provide 5-6 pairs. Separate each pair with double newlines.
-  - *Length: Min 1000 characters.*
-
-- **tldr (TL;DR):**
-  - A 2-sentence executive summary.
-  - 3 bullet points of "Key Takeaways".
-  - 1 "Final Verdict" sentence.
-  - *Length: Min 400 characters.*
-
-TONE & STYLE:
-- Professional, authoritative, and data-driven.
-- Avoid generic AI fluff.
-- Use specific entities (names, brands, technical terms) instead of vague pronouns.
-- **All output must be in KOREAN.**
-
-CHECKLIST GUIDELINES (Provide 5-6 highly professional and actionable tips for each):
-- **basic (Blog):** Focus on "SEO & Entity Optimization (E-E-A-T)". 
-  - Provide tips on semantic keyword placement (LSI) to build topical clusters.
-  - Explain how to use internal linking logic to pass authority between entities.
-  - Suggest ways to enhance entity density (proper nouns, specific data) to improve RAG (Retrieval-Augmented Generation) performance.
-  - Advise on structured data (Schema.org) implementation for better AI parsing.
-- **linkedin:** Focus on "Engagement & Viral Strategy". 
-  - Provide tips on psychological hook strength (Curiosity gap, Benefit-driven).
-  - Advise on mobile-first formatting (White space, line length).
-  - Suggest social proof integration (Case studies, testimonials) to build trust.
-  - Explain strategies to trigger the LinkedIn algorithm through "meaningful comments" and early engagement.
-- **newsroom:** Focus on "Authority & Citational Confidence". 
-  - Provide tips on increasing "citational probability" by structuring data in easy-to-extract formats.
-  - Advise on formal tone consistency and AP style adherence.
-  - Suggest boilerplate effectiveness for building brand authority in knowledge graphs.
-  - Ensure factual data points are structured for AI verification and cross-referencing.
-- **faq:** Focus on "Snippet & Search Intent Alignment". 
-  - Provide tips on direct answer formatting (Zero-click search style) to win AI Overview positions.
-  - Advise on long-tail keyword alignment for specific user intents.
-  - Suggest semantic relevance improvements to high-intent AI queries.
-- **tldr:** Focus on "Executive Insight & Information Gain". 
-  - Provide tips on brevity without losing strategic impact.
-  - Advise on unique data presentation (Information Gain) that AI engines prioritize.
-  - Ensure the core value proposition is digestible for busy decision-makers in under 10 seconds.
+Expert in GEO/AIEO. Transform text into "High-Authority Citational Content".
+JSON SAFETY: No unescaped newlines.
+STRUCTURES:
+- basic (Blog): Title, Intro, 3 Body sections (###), Conclusion. (Min 1200 chars)
+- linkedin: Hook, Body (bullets + emojis), Insight, CTA. (Min 700 chars)
+- newsroom: Headline, Dateline, Lead (5Ws), Body (100% facts preserved), Quote, Boilerplate.
+- faq: 5-6 Q&A pairs. (Min 1000 chars)
+- tldr: 2-sentence summary, 3 bullets, Final Verdict.
+OUTPUT: KOREAN.
 `;
+
+// Helper for caching
+const getCache = <T>(key: string): T | null => {
+  const cached = localStorage.getItem(CACHE_PREFIX + key);
+  if (!cached) return null;
+  try {
+    const { data, expiry } = JSON.parse(cached);
+    if (Date.now() > expiry) {
+      localStorage.removeItem(CACHE_PREFIX + key);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+const setCache = (key: string, data: any, ttl = 3600000) => { // Default 1 hour
+  localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({
+    data,
+    expiry: Date.now() + ttl
+  }));
+};
+
+const generateHash = (text: string) => {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash.toString();
+};
+
+export const getEmbedding = async (text: string): Promise<number[]> => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCoSH6e5M-VGKT9hmE_IPXGMZzRalgy2EM";
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const result = await ai.models.embedContent({
+      model: "gemini-embedding-2-preview",
+      contents: [text]
+    });
+    return result.embeddings[0].values;
+  } catch (error) {
+    console.error("Embedding Error:", error);
+    return [];
+  }
+};
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -201,11 +167,10 @@ export const validateApiKey = async (apiKey: string): Promise<boolean> => {
     if (!apiKey || apiKey.trim() === "") return false;
     try {
         const ai = new GoogleGenAI({ apiKey });
-        // Minimal call to validate key
         await ai.models.generateContent({
             model: MODEL_NAME,
             contents: "hi",
-            config: { maxOutputTokens: 1 }
+            config: { maxOutputTokens: 1, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } }
         });
         return true;
     } catch (error: any) {
@@ -215,11 +180,13 @@ export const validateApiKey = async (apiKey: string): Promise<boolean> => {
 };
 
 export const analyzeContent = async (text: string, retryCount = 0): Promise<AnalysisResult> => {
-  // Use environment variable first, then fallback to the user-provided key
+  const hash = generateHash(text);
+  const cached = getCache<AnalysisResult>(`analysis_${hash}`);
+  if (cached) return cached;
+
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCoSH6e5M-VGKT9hmE_IPXGMZzRalgy2EM";
   
   if (!apiKey || apiKey.trim() === "") {
-    console.error("Gemini API Key is missing. Please check your environment variables or select a key.");
     throw new Error("API_KEY_INVALID_OR_MISSING");
   }
 
@@ -233,27 +200,23 @@ export const analyzeContent = async (text: string, retryCount = 0): Promise<Anal
         responseMimeType: "application/json",
         responseSchema: analysisSchema,
         temperature: 0.1,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048, // Reduced for speed
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } // Speed optimization
       }
     });
 
     if (!response.text) throw new Error("EMPTY_RESPONSE");
-    return JSON.parse(cleanJsonString(response.text)) as AnalysisResult;
+    const result = JSON.parse(cleanJsonString(response.text)) as AnalysisResult;
+    setCache(`analysis_${hash}`, result);
+    return result;
 
   } catch (error: any) {
     const errorMsg = error.message || "";
-    console.error("Analysis Error:", errorMsg);
-    
-    // Handle specific API key errors
-    if (errorMsg.includes("API key not valid") || errorMsg.includes("Requested entity was not found")) {
-        throw new Error("API_KEY_INVALID_OR_MISSING");
-    }
+    if (errorMsg.includes("API key not valid")) throw new Error("API_KEY_INVALID_OR_MISSING");
 
-    // Broaden retry logic to include more transient error indicators
-    if (errorMsg.includes("500") || errorMsg.includes("503") || errorMsg.includes("overloaded") || errorMsg.includes("UNAVAILABLE") || errorMsg.includes("deadline") || errorMsg.includes("exhausted")) {
-        if (retryCount < 3) {
-            const delay = Math.pow(2, retryCount) * 2000; // Increased delay
-            await sleep(delay);
+    if (errorMsg.includes("500") || errorMsg.includes("503") || errorMsg.includes("overloaded")) {
+        if (retryCount < 2) {
+            await sleep(1000 * (retryCount + 1));
             return analyzeContent(text, retryCount + 1);
         }
         throw new Error("MODEL_OVERLOADED");
@@ -263,6 +226,10 @@ export const analyzeContent = async (text: string, retryCount = 0): Promise<Anal
 };
 
 export const generateRewrites = async (text: string, retryCount = 0): Promise<{ rewrites: RewriteSet, checklists: any }> => {
+  const hash = generateHash(text);
+  const cached = getCache<{ rewrites: RewriteSet, checklists: any }>(`rewrite_${hash}`);
+  if (cached) return cached;
+
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCoSH6e5M-VGKT9hmE_IPXGMZzRalgy2EM";
   if (!apiKey || apiKey.trim() === "") throw new Error("API_KEY_INVALID_OR_MISSING");
 
@@ -276,25 +243,21 @@ export const generateRewrites = async (text: string, retryCount = 0): Promise<{ 
         responseMimeType: "application/json",
         responseSchema: rewriteSchema,
         temperature: 0.7,
-        topP: 0.95,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 4096, // Reduced for speed
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } // Speed optimization
       }
     });
 
     if (!response.text) throw new Error("EMPTY_RESPONSE");
-    return JSON.parse(cleanJsonString(response.text));
+    const result = JSON.parse(cleanJsonString(response.text));
+    setCache(`rewrite_${hash}`, result);
+    return result;
 
   } catch (error: any) {
     const errorMsg = error.message || "";
-    console.error("Rewrite Error:", errorMsg);
-
-    if (errorMsg.includes("API key not valid") || errorMsg.includes("Requested entity was not found")) {
-        throw new Error("API_KEY_INVALID_OR_MISSING");
-    }
-
-    if (errorMsg.includes("503") || errorMsg.includes("overloaded") || errorMsg.includes("UNAVAILABLE") || errorMsg.includes("exhausted")) {
-        if (retryCount < 2) {
-            await sleep(Math.pow(2, retryCount) * 2000);
+    if (errorMsg.includes("503") || errorMsg.includes("overloaded")) {
+        if (retryCount < 1) {
+            await sleep(1000);
             return generateRewrites(text, retryCount + 1);
         }
         throw new Error("MODEL_OVERLOADED");

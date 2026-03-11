@@ -1,6 +1,6 @@
 import React, { useState, Suspense, useEffect } from 'react';
 import { AnalysisResult, AnalysisStatus, AnalysisLog } from './types';
-import { analyzeContent, generateRewrites, validateApiKey } from './services/geminiService';
+import { analyzeContent, generateRewrites, validateApiKey, getEmbedding } from './services/geminiService';
 import InputSection from './components/InputSection';
 import UserGuideModal from './components/UserGuideModal';
 import MessageHouseCTA from './components/MessageHouseCTA';
@@ -117,12 +117,25 @@ function App() {
     setStatus(AnalysisStatus.ANALYZING);
     try {
       // 1. Core Analysis (Fast)
-      const data = await analyzeContent(text);
-      setResult(data);
+      const [data, embedding] = await Promise.all([
+        analyzeContent(text),
+        getEmbedding(text.substring(0, 1000)) // Sample for embedding
+      ]);
+      
+      // Use embedding to "verify" information gain (simulated logic for MVP)
+      const enhancedData = {
+        ...data,
+        geoInsight: {
+          ...data.geoInsight,
+          embeddingVector: embedding.slice(0, 10) // Store small slice for reference
+        }
+      };
+
+      setResult(enhancedData);
       setStatus(AnalysisStatus.COMPLETED);
       
       // Update Cache with initial data
-      setAnalysisCache(prev => ({ ...prev, [cacheKey]: data }));
+      setAnalysisCache(prev => ({ ...prev, [cacheKey]: enhancedData }));
 
       setAdminLogs(prev => [{
         id: `LOG-${Date.now().toString().slice(-4)}`,
