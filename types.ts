@@ -14,6 +14,7 @@ export interface Metric {
 }
 
 export interface Snippet {
+  engine: 'google' | 'perplexity' | 'chatgpt' | 'claude';
   question: string;
   answer: string;
 }
@@ -38,15 +39,15 @@ export interface AnalysisResult {
   summary: string;
   metrics: Metric[];
   snippets: Snippet[];
-  rewrites: RewriteSet;
-  checklists: {
+  rewrites?: RewriteSet;
+  checklists?: {
     basic: string[];
     linkedin: string[];
     newsroom: string[];
     faq: string[];
     tldr: string[];
   };
-  geoInsight: GeoInsight; // New field for GEO/AIO optimization
+  geoInsight: GeoInsight;
 }
 
 export interface AnalysisLog {

@@ -16,15 +16,15 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ score, summary }) => {
   };
 
   const getScoreLabel = (val: number) => {
-    if (val >= 80) return 'EXCELLENT';
-    if (val >= 60) return 'GOOD';
-    if (val >= 40) return 'AVERAGE';
-    return 'NEEDS WORK';
+    if (val >= 80) return '최우수 (Excellent)';
+    if (val >= 60) return '우수 (Good)';
+    if (val >= 40) return '보통 (Average)';
+    return '개선 필요 (Needs Work)';
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-zinc-200 p-8 flex flex-col items-center justify-center h-full min-h-[400px]">
-      <h3 className="text-zinc-400 font-bold font-mono text-sm uppercase tracking-widest mb-6">Total AIEO Score</h3>
+      <h3 className="text-zinc-400 font-bold font-mono text-sm uppercase tracking-widest mb-6">종합 AIEO 점수 (Total Score)</h3>
       
       <div className="relative w-full h-64 mb-6" style={{ minWidth: '200px' }}>
         <ResponsiveContainer width="100%" height="100%" debounce={1}>

@@ -6,14 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "recharts": "^3.5.1",
     "@google/genai": "^1.31.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "html2pdf.js": "^0.14.0",
+    "lucide-react": "^0.555.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "lucide-react": "^0.555.0"
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.5.1",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

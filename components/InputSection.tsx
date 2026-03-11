@@ -8,8 +8,23 @@ interface InputSectionProps {
   isAnalyzing: boolean;
 }
 
+const EXAMPLES = [
+  {
+    label: "보도자료 (신제품 출시)",
+    text: "메시지하우스가 AI 정보 엔진 최적화(AIEO)를 위한 혁신적인 진단 도구를 출시했습니다. 이번 도구는 기업의 보도자료나 마케팅 콘텐츠가 ChatGPT, Gemini와 같은 생성형 AI 검색 결과에서 핵심 답변으로 인용될 수 있도록 분석하고 리라이팅하는 기능을 제공합니다. 특히 엔터티 밀도 분석과 인용 신뢰도 지수를 통해 콘텐츠의 권위성을 객관적으로 평가합니다."
+  },
+  {
+    label: "링크드인 (전문가 통찰)",
+    text: "AI 시대의 SEO는 이제 '검색 결과 상단 노출'을 넘어 'AI의 답변 출처가 되는 것'으로 진화하고 있습니다. 이를 우리는 AIEO(AI Information Engine Optimization)라고 부릅니다. 단순히 키워드를 반복하는 것이 아니라, AI가 신뢰할 수 있는 구체적인 데이터와 엔터티를 제공하는 것이 핵심입니다. 당신의 콘텐츠는 AI에게 얼마나 친절한가요?"
+  }
+];
+
 const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze, isAnalyzing }) => {
   const [timeLeft, setTimeLeft] = useState(0);
+
+  const handleExampleClick = (text: string) => {
+    onChange(text);
+  };
 
   // Flash 모델 도입으로 단축된 예상 시간 (기존 대비 약 1.5x~2x 단축)
   const getEstimatedTime = (text: string) => {
@@ -47,11 +62,24 @@ const InputSection: React.FC<InputSectionProps> = ({ value, onChange, onAnalyze,
 
   return (
     <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8 mb-10 transition-all hover:border-zinc-300">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-zinc-100 p-2 rounded-md">
-            <ICONS.Content className="w-6 h-6 text-black" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-zinc-100 p-2 rounded-md">
+              <ICONS.Content className="w-6 h-6 text-black" />
+          </div>
+          <h2 className="text-xl font-bold text-zinc-900 font-mono">콘텐츠 입력</h2>
         </div>
-        <h2 className="text-xl font-bold text-zinc-900 font-mono">콘텐츠 입력</h2>
+        <div className="flex gap-2">
+            {EXAMPLES.map((ex, idx) => (
+                <button
+                    key={idx}
+                    onClick={() => handleExampleClick(ex.text)}
+                    className="text-[10px] md:text-xs font-bold font-mono bg-zinc-100 text-zinc-500 px-3 py-1.5 rounded hover:bg-zinc-200 hover:text-zinc-900 transition-all border border-zinc-200"
+                >
+                    {ex.label}
+                </button>
+            ))}
+        </div>
       </div>
       
       <div className="relative">

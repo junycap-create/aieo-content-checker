@@ -157,7 +157,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
 
             <div className="bg-[#1a4031] p-8 rounded-2xl border border-[#2f5d48] relative overflow-hidden shadow-xl transform md:scale-105 transition-transform">
                 <div className="absolute top-0 right-0 bg-orange-500 text-white px-3 py-1 text-xs font-bold font-mono rounded-bl-lg">NEW STANDARD</div>
-                <h3 className="text-2xl font-bold text-white mb-6">AIEO (AI Info Engine Optimization)</h3>
+                <h3 className="text-2xl font-bold text-white mb-6">AIEO (AI Information Engine Optimization)</h3>
                 <ul className="space-y-4 text-green-50">
                     <li className="flex items-center gap-3">
                         <ICONS.Check className="w-5 h-5 text-orange-400" />

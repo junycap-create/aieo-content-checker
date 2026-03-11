@@ -25,7 +25,7 @@ const MetricGrid: React.FC<MetricGridProps> = ({ metrics }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
         <div className="bg-white rounded-xl shadow-lg border border-zinc-200 p-8 md:col-span-2 min-h-[300px]">
-           <h3 className="text-zinc-900 font-bold font-mono text-lg mb-6 tracking-tight">세부 평가 항목 (Breakdown)</h3>
+           <h3 className="text-zinc-900 font-bold font-mono text-lg mb-6 tracking-tight">세부 진단 지표 (Diagnostic Metrics)</h3>
            <div className="h-48 w-full" style={{ minWidth: '0' }}>
              <ResponsiveContainer width="99%" height="100%" debounce={1}>
                 <BarChart data={metrics} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>

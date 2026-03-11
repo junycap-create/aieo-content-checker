@@ -1,10 +1,14 @@
 
 import React, { useState } from 'react';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { RewriteSet } from '../types';
 import { ICONS } from '../constants';
 
 interface RewriteEngineProps {
   rewrites: RewriteSet;
+  originalText?: string;
   checklists: {
     basic: string[];
     linkedin: string[];
@@ -14,8 +18,9 @@ interface RewriteEngineProps {
   };
 }
 
-const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists }) => {
+const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists, originalText }) => {
   const [activeTab, setActiveTab] = useState<'basic' | 'linkedin' | 'newsroom' | 'faq' | 'tldr'>('basic');
+  const [isCompareMode, setIsCompareMode] = useState(false);
 
   const tabs = [
     { id: 'basic', label: '최적화 기본형 (블로그)' },
@@ -26,7 +31,9 @@ const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists }) =
   ];
 
   const content = rewrites[activeTab];
-  // Safe fallback if checklists structure hasn't updated yet in older cached results
+  // Fix literal \n characters if they appear as text
+  const processedContent = typeof content === 'string' ? content.replace(/\\n/g, '\n') : '';
+  
   const activeChecklist = checklists && checklists[activeTab] ? checklists[activeTab] : [];
 
   const getChecklistTitle = (id: string) => {
@@ -42,17 +49,28 @@ const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists }) =
 
   return (
     <div className="bg-white rounded-xl shadow-lg shadow-zinc-200/50 border border-zinc-200 p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-indigo-600 p-2 rounded-lg text-white">
-            <ICONS.Rewrite className="w-5 h-5" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-600 p-2 rounded-lg text-white">
+              <ICONS.Rewrite className="w-5 h-5" />
+          </div>
+          <h3 className="font-bold text-xl text-zinc-900 font-mono">AIEO 리라이트 엔진</h3>
         </div>
-        <h3 className="font-bold text-xl text-zinc-900 font-mono">AIEO 리라이트 엔진</h3>
+        <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-zinc-500 font-mono uppercase">비교 모드 (Comparison)</span>
+            <button 
+                onClick={() => setIsCompareMode(!isCompareMode)}
+                className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${isCompareMode ? 'bg-indigo-600' : 'bg-zinc-300'}`}
+            >
+                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${isCompareMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         {/* Main Rewrite Area */}
         <div className="lg:col-span-2">
-            {/* Tab Navigation - Improved scrolling and spacing */}
+            {/* Tab Navigation */}
             <div className="flex flex-nowrap space-x-2 mb-4 bg-zinc-100 p-1.5 rounded-lg w-full overflow-x-auto no-scrollbar pr-4">
                 {tabs.map((tab) => (
                 <button
@@ -69,27 +87,47 @@ const RewriteEngine: React.FC<RewriteEngineProps> = ({ rewrites, checklists }) =
                 ))}
             </div>
 
-            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 relative group min-h-[300px] flex flex-col">
-                <div className="text-lg text-zinc-800 font-serif tracking-wide mb-8 break-words pr-24">
-                    {/* Improved rendering: split by double newline for paragraphs, parse bold markdown */}
-                    {content.split(/\n\n+/).map((paragraph, idx) => (
-                        <p key={idx} className="mb-4 leading-8">
-                            {paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => 
-                                part.startsWith('**') && part.endsWith('**') 
-                                ? <strong key={i} className="font-bold text-zinc-900">{part.slice(2, -2)}</strong> 
-                                : part
-                            )}
-                        </p>
-                    ))}
-                </div>
-                {/* Fixed Copy Button with Backdrop Blur to prevent text overlap issues */}
-                <div className="absolute top-4 right-4 z-10">
-                    <button 
-                        onClick={() => navigator.clipboard.writeText(content)}
-                        className="text-xs bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-900 px-3 py-1.5 rounded font-mono hover:bg-black hover:text-white hover:border-black transition-all flex items-center gap-2 shadow-sm"
-                    >
-                        <ICONS.Content className="w-3 h-3" /> COPY
-                    </button>
+            <div className={`grid gap-4 ${isCompareMode ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                {isCompareMode && (
+                    <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-6 flex flex-col">
+                         <div className="flex items-center gap-2 mb-4 text-zinc-400 font-mono text-[10px] uppercase tracking-widest font-bold">
+                            <ICONS.Alert className="w-3 h-3" /> 원본 텍스트 (Original)
+                        </div>
+                        <div className="text-zinc-500 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                            {originalText || "원본 텍스트가 없습니다."}
+                        </div>
+                    </div>
+                )}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 relative group min-h-[400px] flex flex-col">
+                    {isCompareMode && (
+                        <div className="flex items-center gap-2 mb-4 text-indigo-500 font-mono text-[10px] uppercase tracking-widest font-bold">
+                            <ICONS.Zap className="w-3 h-3" /> AIEO 최적화 결과 (Optimized)
+                        </div>
+                    )}
+                    <div className="markdown-body text-zinc-800 font-serif tracking-wide mb-8 pr-12">
+                        <Markdown 
+                            remarkPlugins={[remarkGfm, remarkBreaks]}
+                            components={{
+                                h3: ({node, ...props}) => <h3 className="text-xl font-bold text-zinc-900 mt-6 mb-4 font-sans" {...props} />,
+                                p: ({node, ...props}) => <p className="mb-4 leading-8" {...props} />,
+                                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2" {...props} />,
+                                ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2" {...props} />,
+                                li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
+                                strong: ({node, ...props}) => <strong className="font-bold text-zinc-900" {...props} />,
+                            }}
+                        >
+                            {processedContent}
+                        </Markdown>
+                    </div>
+                    {/* Fixed Copy Button */}
+                    <div className="absolute top-4 right-4 z-10">
+                        <button 
+                            onClick={() => navigator.clipboard.writeText(processedContent)}
+                            className="text-xs bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-900 px-3 py-1.5 rounded font-mono hover:bg-black hover:text-white hover:border-black transition-all flex items-center gap-2 shadow-sm"
+                        >
+                            <ICONS.Content className="w-3 h-3" /> 복사 (COPY)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  @apply font-sans bg-zinc-50 text-zinc-900;
+}
+
+h1, h2, h3, h4, h5, h6, .font-mono {
+  @apply font-mono;
+}
+
+.recharts-responsive-container {
+  min-width: 0;
+  min-height: 0;
+}
+
+@media print { 
+  .no-print { display: none !important; } 
+  body { background-color: white !important; }
+  .result-section { padding: 0 !important; margin: 0 !important; }
+  .bg-zinc-900 { background-color: #18181b !important; color: white !important; -webkit-print-color-adjust: exact; }
+  .bg-orange-500 { background-color: #f97316 !important; -webkit-print-color-adjust: exact; }
+  .bg-zinc-50 { background-color: #fafafa !important; -webkit-print-color-adjust: exact; }
+  .bg-white { background-color: white !important; -webkit-print-color-adjust: exact; }
+  .shadow-lg, .shadow-2xl { shadow: none !important; border: 1px solid #e4e4e7 !important; }
+  canvas { max-width: 100% !important; height: auto !important; }
+}

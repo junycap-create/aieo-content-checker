@@ -27,8 +27,8 @@ const GEOCard: React.FC<GEOCardProps> = ({ data }) => {
             <ICONS.Zap className="w-6 h-6 text-black" />
           </div>
           <div>
-            <h3 className="font-bold text-2xl font-mono tracking-tight">GEO Visibility Index</h3>
-            <p className="text-xs text-zinc-400 mt-1 uppercase tracking-widest font-medium">Generative Engine Optimization Insight</p>
+            <h3 className="font-bold text-2xl font-mono tracking-tight">GEO 가시성 지수 (Visibility Index)</h3>
+            <p className="text-xs text-zinc-400 mt-1 uppercase tracking-widest font-medium">AI 정보 엔진 최적화 인사이트 (AIEO Insight)</p>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">
@@ -60,11 +60,11 @@ const GEOCard: React.FC<GEOCardProps> = ({ data }) => {
           <div className="bg-zinc-800/30 p-6 rounded-2xl border border-zinc-700/50">
             <div className="flex justify-between items-end mb-4">
                <div>
-                  <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Citation Probability</h4>
+                  <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">인용 확률 (Citation Probability)</h4>
                   <p className="text-3xl font-black font-mono text-white">{data.citationConfidence}%</p>
                </div>
                <div className="text-right">
-                  <p className="text-[10px] text-zinc-500 font-mono mb-1">ENTITY DENSITY</p>
+                  <p className="text-[10px] text-zinc-500 font-mono mb-1">엔터티 밀도 (ENTITY DENSITY)</p>
                   <p className="text-xl font-bold text-orange-500 font-mono">{data.entityDensity}/100</p>
                </div>
             </div>
@@ -78,7 +78,7 @@ const GEOCard: React.FC<GEOCardProps> = ({ data }) => {
 
           <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
             <h4 className="text-sm font-bold font-mono text-orange-400 mb-4 flex items-center gap-2 uppercase tracking-widest">
-              <ICONS.Shield className="w-4 h-4" /> AIO Critical Checklist
+              <ICONS.Shield className="w-4 h-4" /> AIO 핵심 체크리스트 (Critical Checklist)
             </h4>
             <ul className="space-y-3">
               {data.optimizationChecklist.map((item, idx) => (
