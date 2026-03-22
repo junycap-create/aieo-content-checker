@@ -5,6 +5,7 @@ import InputSection from './components/InputSection';
 import UserGuideModal from './components/UserGuideModal';
 import MessageHouseCTA from './components/MessageHouseCTA';
 import ServiceIntroduction from './components/ServiceIntroduction';
+import BookIntroduction from './components/BookIntroduction';
 import { ICONS, APP_NAME, APP_VERSION } from './constants';
 
 const ScoreCard = React.lazy(() => import('./components/ScoreCard'));
@@ -23,6 +24,7 @@ const ResultSkeleton = () => (
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
+  const [showBookIntro, setShowBookIntro] = useState(false);
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -198,7 +200,8 @@ function App() {
     });
   };
 
-  if (showIntro) return <ServiceIntroduction onBack={() => setShowIntro(false)} />;
+  if (showIntro) return <ServiceIntroduction onBack={() => setShowIntro(false)} onShowBookIntro={() => { setShowIntro(false); setShowBookIntro(true); }} />;
+  if (showBookIntro) return <BookIntroduction onBack={() => setShowBookIntro(false)} onShowIntro={() => { setShowBookIntro(false); setShowIntro(true); }} />;
   if (isAdmin) return <AdminDashboard onLogout={() => setIsAdmin(false)} logs={adminLogs} isMaintenanceMode={isMaintenanceMode} setMaintenanceMode={setIsMaintenanceMode} />;
 
   return (
@@ -207,11 +210,17 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-6">
               <div className="flex items-center gap-3 cursor-pointer" onClick={handleReset}>
-                <div className="w-10 h-10 bg-[#1a4031] rounded-lg flex items-center justify-center shrink-0 border border-[#2f5d48]">
+                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center shrink-0 border border-zinc-800">
                     <span className="text-orange-500 font-mono font-bold text-lg tracking-tighter">MH</span>
                 </div>
                 <span className="font-bold font-mono text-xl text-zinc-900 hidden md:block tracking-tight">Message House</span>
              </div>
+             {/* Badge - Consistent with Intro */}
+             <div className="hidden lg:flex items-center gap-4">
+                  <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide shadow-sm">
+                      OPEN Beta
+                  </span>
+              </div>
           </div>
           <div className="flex items-center gap-4">
              {isApiKeyMissing && (
@@ -228,6 +237,7 @@ function App() {
                  {isKeyValidating ? '검증 중...' : 'API 키 설정 필요'}
                </button>
              )}
+              <button onClick={() => setShowBookIntro(true)} className="hidden md:block text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors">신간 도서</button>
              <button onClick={() => setShowIntro(true)} className="hidden md:block text-sm font-medium text-zinc-500 hover:text-orange-500 transition-colors">서비스 소개</button>
              <button onClick={() => setIsGuideOpen(true)} className="text-sm font-bold text-zinc-500 hover:text-orange-600 font-mono uppercase tracking-wider flex items-center gap-2 px-3 py-1.5 rounded"><ICONS.Help className="w-4 h-4" /><span className="hidden md:inline">User Guide</span></button>
           </div>

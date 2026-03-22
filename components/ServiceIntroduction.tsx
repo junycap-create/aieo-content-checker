@@ -5,9 +5,10 @@ import FAQSection from './FAQSection';
 
 interface ServiceIntroductionProps {
   onBack: () => void;
+  onShowBookIntro: () => void;
 }
 
-const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => {
+const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack, onShowBookIntro }) => {
   const [activeUseCase, setActiveUseCase] = useState(0);
 
   const useCases = [
@@ -57,7 +58,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
           <div className="flex items-center gap-6">
               {/* Brand Logo - Consistent Style */}
               <div className="flex items-center gap-3 cursor-pointer" onClick={onBack}>
-                <div className="w-10 h-10 bg-[#1a4031] rounded-lg flex items-center justify-center shrink-0 border border-[#2f5d48]">
+                <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center shrink-0 border border-zinc-800">
                     <span className="text-orange-500 font-mono font-bold text-lg tracking-tighter">MH</span>
                 </div>
                 <span className="font-bold font-mono text-xl text-zinc-900 hidden md:block tracking-tight">Message House</span>
@@ -74,14 +75,18 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
               </div>
           </div>
 
-          {/* Right Side Button - Leads to Tool (Bypassing Login) with ORANGE color */}
-          <button 
-            onClick={onBack}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold text-sm transition-colors shadow-md shadow-orange-500/20 flex items-center gap-2"
-          >
-            <span>분석 도구로 이동</span>
-            <ICONS.ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Right Side Button - Leads to Tool (Bypassing Login) with GREEN color */}
+          <div className="flex items-center gap-4">
+            <button onClick={onShowBookIntro} className="hidden md:block text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors">신간 도서</button>
+            <button 
+              onClick={onBack}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 md:px-6 py-2 rounded-lg font-bold text-sm transition-colors shadow-md shadow-orange-500/20 flex items-center gap-2"
+            >
+              <span className="hidden sm:inline">분석 도구로 이동</span>
+              <span className="sm:hidden">분석 시작</span>
+              <ICONS.ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -98,9 +103,9 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
             <ICONS.Zap className="w-4 h-4" />
             The New Standard for AI Search
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-zinc-900 mb-8 leading-tight tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-zinc-900 mb-8 leading-tight tracking-tight">
             AI가 당신의 브랜드를<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1a4031] to-[#2f5d48]">기억하는 방식</span>을 설계하세요.
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400">기억하는 방식</span>을 설계하세요.
           </h1>
           <p className="text-xl md:text-2xl text-zinc-600 max-w-3xl mx-auto leading-relaxed font-light mb-12">
             검색의 시대가 끝났습니다. 이제는 <strong>'답변의 시대'</strong>입니다.<br className="hidden md:block"/>
@@ -110,7 +115,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
                 onClick={onBack}
-                className="px-8 py-4 bg-[#1a4031] text-white rounded-xl font-bold text-lg shadow-lg shadow-green-900/20 hover:bg-[#235240] hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+                className="px-8 py-4 bg-orange-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-orange-500/20 hover:bg-orange-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
             >
                 <ICONS.Search className="w-5 h-5" />
                 지금 내 콘텐츠 진단하기
@@ -155,7 +160,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
                 </ul>
             </div>
 
-            <div className="bg-[#1a4031] p-8 rounded-2xl border border-[#2f5d48] relative overflow-hidden shadow-xl transform md:scale-105 transition-transform">
+            <div className="bg-orange-600 p-8 rounded-2xl border border-orange-500 relative overflow-hidden shadow-xl transform md:scale-105 transition-transform">
                 <div className="absolute top-0 right-0 bg-orange-500 text-white px-3 py-1 text-xs font-bold font-mono rounded-bl-lg">NEW STANDARD</div>
                 <h3 className="text-2xl font-bold text-white mb-6">AIEO (AI Information Engine Optimization)</h3>
                 <ul className="space-y-4 text-green-50">
@@ -231,14 +236,14 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
             </div>
 
             {/* Use Case Tabs */}
-            <div className="flex justify-center gap-4 mb-12 flex-wrap">
+            <div className="flex justify-center gap-2 md:gap-4 mb-12 flex-wrap">
                 {useCases.map((useCase, idx) => (
                     <button
                         key={idx}
                         onClick={() => setActiveUseCase(idx)}
-                        className={`px-6 py-3 rounded-full font-bold text-sm transition-all ${
+                        className={`px-4 md:px-6 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm transition-all ${
                             activeUseCase === idx 
-                            ? 'bg-[#1a4031] text-white shadow-lg transform scale-105' 
+                            ? 'bg-orange-600 text-white shadow-lg transform scale-105' 
                             : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
                         }`}
                     >
@@ -269,7 +274,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
 
                 {/* After Card */}
                 <div className="bg-green-50/50 rounded-xl p-8 border border-green-100 relative ring-1 ring-green-500/20 shadow-lg shadow-green-900/5">
-                    <div className="absolute top-0 left-0 bg-[#1a4031] text-white px-4 py-1.5 rounded-tl-xl rounded-br-xl text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-2">
+                    <div className="absolute top-0 left-0 bg-orange-600 text-white px-4 py-1.5 rounded-tl-xl rounded-br-xl text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-2">
                     After <ICONS.Check className="w-3 h-3" />
                     </div>
                     <div className="mt-8 space-y-4">
@@ -326,7 +331,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
       <FAQSection />
 
       {/* Footer CTA */}
-      <section className="py-24 bg-[#1a4031] text-center px-6">
+      <section className="py-24 bg-zinc-900 text-center px-6">
         <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">
           당신의 메시지, <br/>
           <span className="text-orange-500">AI가 기억하도록</span> 만드세요.
@@ -337,7 +342,7 @@ const ServiceIntroduction: React.FC<ServiceIntroductionProps> = ({ onBack }) => 
         </p>
         <button 
             onClick={onBack}
-            className="px-10 py-5 bg-orange-500 text-white rounded-xl font-bold text-xl hover:bg-orange-600 shadow-lg shadow-orange-900/50 hover:-translate-y-1 transition-all"
+            className="px-8 md:px-10 py-4 md:py-5 bg-orange-500 text-white rounded-xl font-bold text-lg md:text-xl hover:bg-orange-600 shadow-lg shadow-orange-900/50 hover:-translate-y-1 transition-all"
         >
             무료로 진단 시작하기
         </button>
