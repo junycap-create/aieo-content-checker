@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ICONS } from '../constants';
 
 interface BookIntroductionProps {
@@ -8,6 +8,10 @@ interface BookIntroductionProps {
 }
 
 const BookIntroduction: React.FC<BookIntroductionProps> = ({ onBack, onShowIntro }) => {
+  // /author_profile.jpg is optional. Until the file exists in public/, show a
+  // clean initials badge instead of a broken image or a random placeholder.
+  // Dropping public/author_profile.jpg in is enough to make the photo appear.
+  const [authorPhotoFailed, setAuthorPhotoFailed] = useState(false);
   const chapters = [
     {
       number: "01",
@@ -205,16 +209,25 @@ const BookIntroduction: React.FC<BookIntroductionProps> = ({ onBack, onShowIntro
       <section className="py-24 bg-white border-b border-zinc-200">
         <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-start gap-12">
             <div className="w-56 aspect-[3/4] bg-zinc-100 rounded-2xl flex items-center justify-center shrink-0 border-4 border-zinc-50 shadow-2xl overflow-hidden group/author">
-             <img 
-               src="/author_profile.jpg" 
-               alt="저자 이중대 프로필"
-               referrerPolicy="no-referrer"
-               className="w-full h-full object-cover group-hover/author:scale-105 transition-transform duration-700"
-               onError={(e) => {
-                 const target = e.target as HTMLImageElement;
-                 target.src = "https://picsum.photos/seed/leejungdae/600/800";
-               }}
-             />
+             {authorPhotoFailed ? (
+               <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 flex flex-col items-center justify-center gap-4 px-4 text-center">
+                 <div className="w-24 h-24 rounded-full bg-orange-500/15 border border-orange-500/40 flex items-center justify-center">
+                   <span className="text-orange-400 font-black text-2xl tracking-tight">이중대</span>
+                 </div>
+                 <div className="space-y-1">
+                   <p className="text-white text-sm font-bold">저자 소개</p>
+                   <p className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest">Message House</p>
+                 </div>
+               </div>
+             ) : (
+               <img 
+                 src="/author_profile.jpg" 
+                 alt="저자 이중대 프로필"
+                 referrerPolicy="no-referrer"
+                 className="w-full h-full object-cover group-hover/author:scale-105 transition-transform duration-700"
+                 onError={() => setAuthorPhotoFailed(true)}
+               />
+             )}
           </div>
           <div className="flex-1">
             <div className="mb-8">
