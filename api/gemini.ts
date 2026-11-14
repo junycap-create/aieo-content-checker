@@ -7,7 +7,7 @@ import {
   GeminiServiceError,
   toGeminiServiceError,
   type GeminiErrorCode,
-} from "../server/gemini-core";
+} from "../server/gemini-core.js";
 
 /**
  * Vercel Serverless Function: the only place the Gemini API key is used.
