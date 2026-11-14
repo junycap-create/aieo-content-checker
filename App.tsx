@@ -1,6 +1,6 @@
 import React, { useState, Suspense, useEffect } from 'react';
 import { AnalysisResult, AnalysisStatus, AnalysisLog } from './types';
-import { analyzeContent, generateRewrites, validateApiKey, getEmbedding } from './services/geminiService';
+import { analyzeContent, generateRewrites, getEmbedding, checkServiceHealth, ServiceError } from './services/geminiService';
 import InputSection from './components/InputSection';
 import UserGuideModal from './components/UserGuideModal';
 import MessageHouseCTA from './components/MessageHouseCTA';
@@ -13,6 +13,41 @@ const MetricGrid = React.lazy(() => import('./components/MetricGrid'));
 const SnippetPreview = React.lazy(() => import('./components/SnippetPreview'));
 const RewriteEngine = React.lazy(() => import('./components/RewriteEngine'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+
+type ErrorKind = 'NONE' | 'MAINTENANCE' | 'QUOTA' | 'RATE_LIMIT' | 'OVERLOADED' | 'GENERAL';
+
+// Why an analysis failed decides what the user is told: a credit problem, a
+// busy model and a misconfigured server each need a different next step.
+const ERROR_GUIDE: Record<Exclude<ErrorKind, 'NONE'>, { title: string; body: string; hint: string }> = {
+  MAINTENANCE: {
+    title: '서비스 점검 중',
+    body: 'AI 분석 서버 설정을 정비하고 있어 지금은 진단을 진행할 수 없습니다.',
+    hint: '잠시 후 다시 이용해 주세요.',
+  },
+  QUOTA: {
+    title: 'AI 사용 한도 초과',
+    body: 'AI 사용 한도(크레딧)가 소진되어 분석을 진행할 수 없습니다.',
+    hint: '한도가 충전되면 바로 다시 이용하실 수 있습니다.',
+  },
+  RATE_LIMIT: {
+    title: '요청이 잠시 몰렸습니다',
+    body: '짧은 시간에 요청이 많이 들어와 처리가 지연되고 있습니다.',
+    hint: '1분 정도 뒤에 다시 시도해 주세요.',
+  },
+  OVERLOADED: {
+    title: 'AI 서버 부하',
+    body: 'AI 서버 부하가 높아 분석을 마치지 못했습니다.',
+    hint: '잠시 후 다시 시도해 주세요.',
+  },
+  GENERAL: {
+    title: '분석 오류 발생',
+    body: '분석 중 오류가 발생했습니다.',
+    hint: '잠시 후 다시 시도해 주세요.',
+  },
+};
+
+const describeFailure = (error: unknown): Exclude<ErrorKind, 'NONE'> =>
+  error instanceof ServiceError ? error.type : 'GENERAL';
 
 const ResultSkeleton = () => (
   <div className="animate-pulse space-y-8">
@@ -29,7 +64,8 @@ function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [errorType, setErrorType] = useState<'NONE' | 'OVERLOADED' | 'GENERAL'>('NONE');
+  const [errorType, setErrorType] = useState<ErrorKind>('NONE');
+  const [rewriteErrorMessage, setRewriteErrorMessage] = useState<string | null>(null);
   const [adminLogs, setAdminLogs] = useState<AnalysisLog[]>([]);
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [analysisCache, setAnalysisCache] = useState<Record<string, AnalysisResult>>({});
@@ -60,53 +96,35 @@ function App() {
     localStorage.removeItem('last_aieo_result');
   };
 
-  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
-  const [isKeyValidating, setIsKeyValidating] = useState(false);
+  // The API key lives only on the server; the browser just asks whether the
+  // AI backend is usable right now.
+  const [serviceStatus, setServiceStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
 
-  // Check if API key is already selected on mount
   useEffect(() => {
-    const checkKey = async () => {
-      if (typeof window !== 'undefined' && (window as any).aistudio) {
-        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-        const envKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        // If envKey is just an empty string from JSON.stringify(""), it's not valid
-        const isEnvKeyValid = envKey && envKey.trim() !== "";
-        setIsApiKeyMissing(!hasKey && !isEnvKeyValid);
-      }
-    };
-    checkKey();
+    let cancelled = false;
+    checkServiceHealth().then((health) => {
+      if (!cancelled) setServiceStatus(health.ok ? 'ready' : 'unavailable');
+    });
+    return () => { cancelled = true; };
   }, []);
 
-  const handleSelectKey = async () => {
-    if (typeof window !== 'undefined' && (window as any).aistudio) {
-      setIsKeyValidating(true);
-      try {
-        await (window as any).aistudio.openSelectKey();
-        // After selecting, we assume it's successful and validate
-        const envKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-        if (envKey) {
-          const isValid = await validateApiKey(envKey);
-          setIsApiKeyMissing(!isValid);
-        } else {
-          setIsApiKeyMissing(false); // Assume platform handles it if envKey not immediately updated
-        }
-      } catch (e) {
-        console.error("Key selection failed", e);
-      } finally {
-        setIsKeyValidating(false);
-      }
-    }
-  };
+  const errorGuide = ERROR_GUIDE[errorType === 'NONE' ? 'GENERAL' : errorType];
 
   const handleAnalyze = async (text: string = inputText) => {
     if (isMaintenanceMode || !text.trim()) return;
     
-    // Check if key is missing before starting
-    const currentKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-    if (!currentKey && isApiKeyMissing) {
-      handleSelectKey();
-      return;
+    // Stop early when the AI backend is known to be unavailable, but re-check
+    // first so a fixed server recovers without a page reload.
+    if (serviceStatus === 'unavailable') {
+      const health = await checkServiceHealth();
+      if (!health.ok) {
+        setErrorType('MAINTENANCE');
+        setStatus(AnalysisStatus.ERROR);
+        return;
+      }
+      setServiceStatus('ready');
     }
+
     // Check Cache first
     const cacheKey = text.trim();
     if (analysisCache[cacheKey]) {
@@ -116,6 +134,7 @@ function App() {
     }
 
     setErrorType('NONE');
+    setRewriteErrorMessage(null);
     setStatus(AnalysisStatus.ANALYZING);
     try {
       // 1. Core Analysis (Fast)
@@ -160,22 +179,19 @@ function App() {
         setResult(finalResult);
         // Update Cache with full data
         setAnalysisCache(prev => ({ ...prev, [cacheKey]: finalResult }));
-      } catch (rewriteError: any) {
-        console.error("Rewrite generation failed:", rewriteError);
-        if (rewriteError.message === "API_KEY_INVALID_OR_MISSING") {
-          setIsApiKeyMissing(true);
-        }
+      } catch (rewriteIssue) {
+        console.error("Rewrite generation failed:", rewriteIssue);
+        const kind = describeFailure(rewriteIssue);
+        if (kind === 'MAINTENANCE') setServiceStatus('unavailable');
+        setRewriteErrorMessage(`${ERROR_GUIDE[kind].body} ${ERROR_GUIDE[kind].hint}`);
       }
 
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      if (error.message === "API_KEY_INVALID_OR_MISSING") {
-        setIsApiKeyMissing(true);
-        setStatus(AnalysisStatus.IDLE);
-      } else {
-        setErrorType(error.message === "MODEL_OVERLOADED" ? 'OVERLOADED' : 'GENERAL');
-        setStatus(AnalysisStatus.ERROR);
-      }
+      const kind = describeFailure(error);
+      if (kind === 'MAINTENANCE') setServiceStatus('unavailable');
+      setErrorType(kind);
+      setStatus(AnalysisStatus.ERROR);
     }
   };
 
@@ -223,19 +239,18 @@ function App() {
               </div>
           </div>
           <div className="flex items-center gap-4">
-             {isApiKeyMissing && (
-               <button 
-                 onClick={handleSelectKey}
-                 disabled={isKeyValidating}
-                 className="flex items-center gap-2 bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-all animate-pulse border border-orange-200 disabled:opacity-50"
+             {serviceStatus !== 'ready' && (
+               <div
+                 title={serviceStatus === 'checking' ? 'AI 서비스 연결을 확인하고 있습니다.' : 'AI 분석 서버를 점검 중입니다. 잠시 후 다시 이용해 주세요.'}
+                 className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-sm font-bold border border-amber-200"
                >
-                 {isKeyValidating ? (
-                   <div className="w-4 h-4 border-2 border-orange-700/30 border-t-orange-700 rounded-full animate-spin" />
+                 {serviceStatus === 'checking' ? (
+                   <div className="w-4 h-4 border-2 border-amber-700/30 border-t-amber-700 rounded-full animate-spin" />
                  ) : (
                    <ICONS.Alert className="w-4 h-4" />
                  )}
-                 {isKeyValidating ? '검증 중...' : 'API 키 설정 필요'}
-               </button>
+                 <span className="hidden sm:inline">{serviceStatus === 'checking' ? 'AI 서비스 확인 중' : 'AI 서비스 점검 중'}</span>
+               </div>
              )}
               <button onClick={() => setShowBookIntro(true)} className="hidden md:block text-sm font-bold text-orange-600 hover:text-orange-700 transition-colors">신간 도서</button>
              <button onClick={() => setShowIntro(true)} className="hidden md:block text-sm font-medium text-zinc-500 hover:text-orange-500 transition-colors">서비스 소개</button>
@@ -286,6 +301,13 @@ function App() {
                 <div id="rewrite-section" className="break-inside-avoid animate-fade-in scroll-mt-32">
                    <RewriteEngine rewrites={result.rewrites} checklists={result.checklists} originalText={inputText} />
                  </div>
+               ) : rewriteErrorMessage ? (
+                 <div className="p-10 bg-amber-50 rounded-xl border border-amber-200 text-center break-inside-avoid">
+                    <ICONS.Alert className="w-8 h-8 text-amber-500 mx-auto mb-4" />
+                    <p className="text-amber-900 font-bold mb-1">리라이트 콘텐츠를 만들지 못했습니다</p>
+                    <p className="text-amber-700 text-sm mb-5 leading-relaxed">{rewriteErrorMessage}</p>
+                    <button onClick={() => handleAnalyze(inputText)} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">리라이트 다시 생성</button>
+                 </div>
                ) : (
                  <div className="p-12 bg-zinc-100 rounded-xl border border-zinc-200 text-center animate-pulse">
                     <ICONS.Rewrite className="w-8 h-8 text-zinc-400 mx-auto mb-4 animate-spin" />
@@ -301,10 +323,9 @@ function App() {
         {status === AnalysisStatus.ERROR && (
            <div className="text-center p-12 bg-red-50 rounded-xl border border-red-200 shadow-sm animate-fade-in">
               <ICONS.Alert className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-red-700 font-mono mb-2">분석 오류 발생</h3>
-              <p className="text-red-600 text-lg mb-6 leading-relaxed">
-                {errorType === 'OVERLOADED' ? 'AI 서버 부하가 높습니다. 잠시 후 다시 시도해주세요.' : '일시적인 네트워크 오류가 발생했습니다.'}
-              </p>
+              <h3 className="text-xl font-bold text-red-700 font-mono mb-2">{errorGuide.title}</h3>
+              <p className="text-red-600 text-lg mb-2 leading-relaxed">{errorGuide.body}</p>
+              <p className="text-red-500/80 text-sm mb-6">{errorGuide.hint}</p>
               <button onClick={() => handleAnalyze(inputText)} className="bg-red-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-red-700 transition-all font-mono">RETRY ANALYSIS</button>
            </div>
         )}

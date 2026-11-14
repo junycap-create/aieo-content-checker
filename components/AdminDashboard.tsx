@@ -229,21 +229,17 @@ const ContentLogViewer: React.FC<{ logs: AnalysisLog[] }> = ({ logs }) => {
 };
 
 const SettingsPanel: React.FC<{ isMaintenance: boolean, setMaintenance: (v: boolean) => void }> = ({ isMaintenance, setMaintenance }) => {
-    const [testKey, setTestKey] = useState('');
-    const [isValidating, setIsValidating] = useState(false);
-    const [validationResult, setValidationResult] = useState<'NONE' | 'SUCCESS' | 'FAIL'>('NONE');
+    const [isChecking, setIsChecking] = useState(false);
+    const [health, setHealth] = useState<{ ok: boolean; keyConfigured: boolean; model: string } | null>(null);
 
-    const handleValidate = async () => {
-        if (!testKey) return;
-        setIsValidating(true);
-        setValidationResult('NONE');
-        
-        // Import dynamically to avoid circular dependency if any, but geminiService is fine
-        const { validateApiKey } = await import('../services/geminiService');
-        const isValid = await validateApiKey(testKey);
-        
-        setValidationResult(isValid ? 'SUCCESS' : 'FAIL');
-        setIsValidating(false);
+    // The key exists only as a server environment variable, so the admin can
+    // check the backend state but never paste or read a key here.
+    const handleCheckStatus = async () => {
+        setIsChecking(true);
+        setHealth(null);
+        const { checkServiceHealth } = await import('../services/geminiService');
+        setHealth(await checkServiceHealth());
+        setIsChecking(false);
     };
 
     return (
@@ -279,34 +275,25 @@ const SettingsPanel: React.FC<{ isMaintenance: boolean, setMaintenance: (v: bool
              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-8">
                 <h3 className="font-bold text-lg text-zinc-900 mb-6 flex items-center gap-2">
                     <ICONS.Lock className="w-5 h-5 text-zinc-900" />
-                    API Key Management
+                    Server API Status
                 </h3>
                 <div className="space-y-4">
                      <div className="max-w-md">
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Validate & Test API Key</label>
-                        <div className="flex gap-2">
-                            <input 
-                                type="password" 
-                                value={testKey}
-                                onChange={(e) => setTestKey(e.target.value)}
-                                placeholder="Enter Gemini API Key to test..."
-                                className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-black outline-none"
-                            />
-                            <button 
-                                onClick={handleValidate}
-                                disabled={isValidating || !testKey}
-                                className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-800 transition-all disabled:bg-zinc-300"
-                            >
-                                {isValidating ? 'Testing...' : 'Test Key'}
-                            </button>
-                        </div>
-                        {validationResult === 'SUCCESS' && <p className="text-xs text-green-600 mt-2 font-medium flex items-center gap-1"><ICONS.Check className="w-3 h-3" /> Valid API Key. This key is active and working.</p>}
-                        {validationResult === 'FAIL' && <p className="text-xs text-red-600 mt-2 font-medium flex items-center gap-1"><ICONS.Alert className="w-3 h-3" /> Invalid API Key. Please check the key and try again.</p>}
-                     </div>
-                     <div className="pt-4 border-t border-zinc-100">
-                        <button className="text-sm text-indigo-600 font-bold hover:underline">Rotate Production Keys</button>
-                        <span className="mx-2 text-zinc-300">|</span>
-                        <button className="text-sm text-indigo-600 font-bold hover:underline">View Audit Logs</button>
+                        <p className="text-xs text-zinc-500 mb-3 leading-relaxed">
+                            Gemini API 키는 Vercel 서버 환경변수 <code className="font-mono text-zinc-700">GEMINI_API_KEY</code>로만 관리되며 브라우저에는 전달되지 않습니다.
+                        </p>
+                        <button 
+                            onClick={handleCheckStatus}
+                            disabled={isChecking}
+                            className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-800 transition-all disabled:bg-zinc-300"
+                        >
+                            {isChecking ? 'Checking...' : 'Check Status'}
+                        </button>
+                        {health && (health.ok && health.keyConfigured ? (
+                            <p className="text-xs text-green-600 mt-3 font-medium flex items-center gap-1"><ICONS.Check className="w-3 h-3" /> AI 백엔드 정상 {health.model ? `(model: ${health.model})` : ''}</p>
+                        ) : (
+                            <p className="text-xs text-red-600 mt-3 font-medium flex items-center gap-1"><ICONS.Alert className="w-3 h-3" /> AI 백엔드 사용 불가 — 서버 환경변수 GEMINI_API_KEY를 확인해 주세요.</p>
+                        ))}
                      </div>
                 </div>
              </div>
