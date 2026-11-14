@@ -14,7 +14,7 @@ const SnippetPreview = React.lazy(() => import('./components/SnippetPreview'));
 const RewriteEngine = React.lazy(() => import('./components/RewriteEngine'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 
-type ErrorKind = 'NONE' | 'MAINTENANCE' | 'QUOTA' | 'RATE_LIMIT' | 'OVERLOADED' | 'GENERAL';
+type ErrorKind = 'NONE' | 'MAINTENANCE' | 'QUOTA' | 'RATE_LIMIT' | 'OVERLOADED' | 'INVALID_INPUT' | 'GENERAL';
 
 // Why an analysis failed decides what the user is told: a credit problem, a
 // busy model and a misconfigured server each need a different next step.
@@ -38,6 +38,11 @@ const ERROR_GUIDE: Record<Exclude<ErrorKind, 'NONE'>, { title: string; body: str
     title: 'AI 서버 부하',
     body: 'AI 서버 부하가 높아 분석을 마치지 못했습니다.',
     hint: '잠시 후 다시 시도해 주세요.',
+  },
+  INVALID_INPUT: {
+    title: '입력 내용을 확인해 주세요',
+    body: '분석할 내용이 비어 있거나 너무 깁니다.',
+    hint: '내용을 조금 줄여서 다시 시도해 주세요.',
   },
   GENERAL: {
     title: '분석 오류 발생',

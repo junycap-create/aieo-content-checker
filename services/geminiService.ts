@@ -18,11 +18,12 @@ const REQUEST_TIMEOUT_MS = 120000;
 
 /** Error groups the UI knows how to explain to the user. */
 export type ServiceErrorType =
-  | "MAINTENANCE"   // server key missing/invalid, or endpoint unavailable
-  | "QUOTA"         // AI project out of credit (HTTP 402)
-  | "RATE_LIMIT"    // too many requests (HTTP 429)
-  | "OVERLOADED"    // model temporarily overloaded (HTTP 503)
-  | "GENERAL";      // anything else, including network failure
+  | "MAINTENANCE"    // server key missing/invalid, or endpoint unavailable
+  | "QUOTA"          // AI project out of credit (HTTP 402)
+  | "RATE_LIMIT"     // too many requests (HTTP 429)
+  | "OVERLOADED"     // model temporarily overloaded (HTTP 503)
+  | "INVALID_INPUT"  // empty or over-long text (HTTP 400)
+  | "GENERAL";       // anything else, including network failure
 
 export class ServiceError extends Error {
   readonly type: ServiceErrorType;
@@ -55,7 +56,10 @@ const mapServiceErrorType = (code: string, status: number): ServiceErrorType => 
       return "RATE_LIMIT";
     case "MODEL_OVERLOADED":
       return "OVERLOADED";
+    case "BAD_REQUEST":
+      return "INVALID_INPUT";
     default:
+      if (status === 400) return "INVALID_INPUT";
       if (status === 402) return "QUOTA";
       if (status === 429) return "RATE_LIMIT";
       if (status === 503) return "MAINTENANCE";
